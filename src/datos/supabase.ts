@@ -11,6 +11,8 @@ type FilaViaje = {
   conductor_id: string;
   origen: string;
   destino: string;
+  destino_lat: number | null;
+  destino_lng: number | null;
   sale_en: string;
   costo_total: number;
   cupos: number;
@@ -30,7 +32,7 @@ type FilaCuenta = {
   link_pago: string | null;
 };
 
-const COLUMNAS_VIAJE = 'id, conductor_id, origen, destino, sale_en, costo_total, cupos, inscritos, estado, notas';
+const COLUMNAS_VIAJE = 'id, conductor_id, origen, destino, destino_lat, destino_lng, sale_en, costo_total, cupos, inscritos, estado, notas';
 
 // Corta las consultas que no responden, para que la app muestre "Reintentar" en vez de quedarse pegada.
 const ESPERA_MAXIMA_MS = 15000;
@@ -115,6 +117,7 @@ export class RepositorioSupabase implements Repositorio {
         conductor: { id: f.conductor_id, nombre: c?.nombre ?? 'Conductor', auto: c?.auto ?? null, patente: c?.patente ?? null },
         origen: f.origen,
         destino: f.destino,
+        destinoUbicacion: f.destino_lat != null && f.destino_lng != null ? { lat: f.destino_lat, lng: f.destino_lng } : null,
         saleEn: f.sale_en,
         costoTotal: f.costo_total,
         cupos: f.cupos,
@@ -159,6 +162,8 @@ export class RepositorioSupabase implements Repositorio {
         p_cupos: d.cupos,
         p_cuenta_cobro: d.cuentaCobroId,
         p_notas: d.notas,
+        p_destino_lat: d.destinoUbicacion?.lat ?? null,
+        p_destino_lng: d.destinoUbicacion?.lng ?? null,
         p_paraderos: d.paraderos.map((p) => ({
           nombre: p.nombre, tipo: p.tipo, lat: p.lat, lng: p.lng, minutos_desde_salida: p.minutosDesdeSalida,
         })),

@@ -45,3 +45,18 @@ export function viajesCerca(viajes: Viaje[], punto: Coordenada, maxM: number): V
   }
   return cercanos.sort((a, b) => a.distanciaM - b.distanciaM);
 }
+
+export type ViajeHacia = { viaje: Viaje; distanciaM: number };
+
+// Viajes que llegan a menos de maxM metros del destino buscado, del más cercano al más lejano.
+// Si el viaje no tiene destino ubicado, se usa su último paradero como aproximación.
+export function viajesHacia(viajes: Viaje[], destino: Coordenada, maxM: number): ViajeHacia[] {
+  const resultado: ViajeHacia[] = [];
+  for (const viaje of viajes) {
+    const llegada = viaje.destinoUbicacion ?? viaje.paraderos[viaje.paraderos.length - 1];
+    if (!llegada) continue;
+    const d = distanciaM(destino, llegada);
+    if (d <= maxM) resultado.push({ viaje, distanciaM: d });
+  }
+  return resultado.sort((a, b) => a.distanciaM - b.distanciaM);
+}

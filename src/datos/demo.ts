@@ -19,7 +19,7 @@ function manana(hora: number, minuto: number): string {
 function viajesDeEjemplo(): Viaje[] {
   return [
     {
-      id: 'v1', origen: 'Maipú', destino: 'Metro Los Leones', saleEn: manana(7, 30), costoTotal: 10000, cupos: 4,
+      id: 'v1', origen: 'Maipú', destino: 'Metro Los Leones', destinoUbicacion: { lat: -33.4220, lng: -70.6077 }, saleEn: manana(7, 30), costoTotal: 10000, cupos: 4,
       inscritos: 2, estado: 'esperando_pasajeros', notas: null,
       conductor: { id: 'c1', nombre: 'Camila R.', auto: 'Toyota Yaris gris', patente: 'RTKP·42' },
       paraderos: [
@@ -29,7 +29,7 @@ function viajesDeEjemplo(): Viaje[] {
       ],
     },
     {
-      id: 'v2', origen: 'La Florida', destino: 'Campus San Joaquín', saleEn: manana(8, 0), costoTotal: 12000, cupos: 3,
+      id: 'v2', origen: 'La Florida', destino: 'Campus San Joaquín', destinoUbicacion: { lat: -33.4985, lng: -70.6140 }, saleEn: manana(8, 0), costoTotal: 12000, cupos: 3,
       inscritos: 1, estado: 'esperando_pasajeros', notas: null,
       conductor: { id: 'c2', nombre: 'Diego M.', auto: 'Kia Morning blanco', patente: 'LJRS·18' },
       paraderos: [
@@ -38,7 +38,7 @@ function viajesDeEjemplo(): Viaje[] {
       ],
     },
     {
-      id: 'v3', origen: 'Ñuñoa', destino: 'Las Condes', saleEn: manana(8, 15), costoTotal: 0, cupos: 3,
+      id: 'v3', origen: 'Ñuñoa', destino: 'Las Condes', destinoUbicacion: { lat: -33.4170, lng: -70.5800 }, saleEn: manana(8, 15), costoTotal: 0, cupos: 3,
       inscritos: 1, estado: 'esperando_pasajeros', notas: 'Voy igual a la oficina, súbete gratis.',
       conductor: { id: 'c3', nombre: 'Valentina S.', auto: 'Suzuki Swift rojo', patente: 'KXPD·71' },
       paraderos: [
@@ -143,7 +143,7 @@ export class RepositorioDemo implements Repositorio {
     if (d.paraderos.length === 0) throw new Error('Agrega al menos un paradero');
     const id = `v${Date.now()}`;
     this.viajes.push({
-      id, origen: d.origen, destino: d.destino, saleEn: d.saleEn.toISOString(), costoTotal: d.costoTotal,
+      id, origen: d.origen, destino: d.destino, destinoUbicacion: d.destinoUbicacion ?? null, saleEn: d.saleEn.toISOString(), costoTotal: d.costoTotal,
       cupos: d.cupos, inscritos: 0, estado: 'esperando_pasajeros', notas: d.notas,
       conductor: { id: YO, nombre: this.perfil?.nombre ?? 'Tú', auto: this.perfil?.auto ?? null, patente: this.perfil?.patente ?? null },
       paraderos: d.paraderos.map((p, i) => ({ ...p, id: `${id}-p${i}`, orden: i + 1 })),

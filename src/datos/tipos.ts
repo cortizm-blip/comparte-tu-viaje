@@ -20,6 +20,8 @@ export type Viaje = {
   conductor: Conductor;
   origen: string;
   destino: string;
+  // Ubicación del destino; null en viajes publicados antes de guardarla.
+  destinoUbicacion: Coordenada | null;
   saleEn: string;
   costoTotal: number;
   cupos: number;
@@ -58,6 +60,7 @@ export type NuevoParadero = Omit<Paradero, 'id' | 'orden'>;
 export type NuevoViaje = {
   origen: string;
   destino: string;
+  destinoUbicacion?: Coordenada | null;
   saleEn: Date;
   costoTotal: number;
   cupos: number;
