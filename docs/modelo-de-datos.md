@@ -29,3 +29,12 @@ La vista `viajes_con_precio` entrega inscritos, cupos libres, precio actual y pr
 - **Viaje confirmado** lo marca el conductor; el estado inicial es "esperando pasajeros".
 - **El cobro** se registra al terminar el viaje, como en el mockup. La tabla `pagos` sirve también si se decide cobrar al inscribirse.
 - **"Conductor llegando"** se calculará en la app del conductor (o en una función) comparando su posición con cada paradero; falta definir la distancia, propuesta 1 km o 3 minutos.
+
+## Funciones para la app (`0002_flujo_app.sql`)
+
+- `publicar_viaje(...)` crea el viaje y sus paraderos juntos. Exige cuenta de cobro si es pagado, al menos un paradero y salida dentro de los próximos 2 días.
+- Con pasajeros inscritos el conductor no puede subir el costo ni dejar menos cupos que inscritos.
+- Si el conductor cancela, se avisa al tiro a los inscritos.
+- `actualizar_ubicacion(viaje, lat, lng)` guarda la posición del conductor y avisa una vez a cada pasajero cuando está a menos de 1 km de su paradero.
+- `informar_pago(viaje)` registra que el pasajero transfirió el precio final; `confirmar_pago(inscripcion)` lo confirma el conductor.
+- Los paraderos guardan `minutos_desde_salida` para mostrar la hora estimada en cada uno, y el perfil guarda auto y patente.
