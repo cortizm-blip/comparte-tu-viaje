@@ -80,7 +80,7 @@ export class RepositorioSupabase implements Repositorio {
   }
 
   async guardarPushToken(token: string): Promise<void> {
-    revisar(await this.sb.from('perfiles').update({ push_token: token }).eq('id', this.yo));
+    revisar(await this.sb.from('tokens_push').upsert({ usuario_id: this.yo, token, actualizado_en: new Date().toISOString() }));
   }
 
   // Completa filas de la vista con paraderos y datos del conductor (dos consultas en vez de una por viaje).
