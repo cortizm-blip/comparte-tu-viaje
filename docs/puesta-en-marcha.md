@@ -54,3 +54,13 @@ npm run typecheck   # TypeScript
 for f in supabase/migrations/*.sql; do psql -d <base> -f $f; done
 for f in supabase/tests/*.sql; do psql -d <base> -v ON_ERROR_STOP=1 -f $f; done
 ```
+
+## Proyecto creado
+
+- Proyecto Supabase `comparte-tu-viaje` (ref `emtbqgbuzwzwagrwpbpm`, región São Paulo), con las migraciones 0001 a 0004, la función `enviar-notificaciones` y el cron cada minuto ya configurados.
+- `.env` para este proyecto:
+  ```
+  EXPO_PUBLIC_SUPABASE_URL=https://emtbqgbuzwzwagrwpbpm.supabase.co
+  EXPO_PUBLIC_SUPABASE_KEY=sb_publishable_YaHRl7roLMc5DldxGKfL6w_Xj40jny8
+  ```
+  Es la llave pública (publishable); se puede compartir, la seguridad la dan las políticas por fila.
