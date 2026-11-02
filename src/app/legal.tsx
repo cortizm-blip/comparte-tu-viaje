@@ -9,7 +9,8 @@ export default function Legal() {
   const { doc } = useLocalSearchParams<{ doc: DocumentoLegal }>();
   const documento = DOCUMENTOS[doc === 'privacidad' ? 'privacidad' : 'terminos'];
   return (
-    <ScrollView style={{ backgroundColor: color.fondo }} contentContainerStyle={{ padding: espacio.l, gap: espacio.l, paddingBottom: espacio.xl * 2 }}>
+    <ScrollView style={{ backgroundColor: color.fondo }} contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={{ padding: espacio.l, gap: espacio.l, paddingBottom: espacio.xl * 2 }}>
       <Stack.Screen options={{ title: documento.titulo }} />
       {documento.secciones.map((sec) => (
         <View key={sec.titulo} style={{ gap: espacio.xs }}>
