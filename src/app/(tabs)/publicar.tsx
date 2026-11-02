@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import MapView, { Marker, type LatLng } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Boton, Campo, s, Segmento, Subtitulo, Tarjeta, Titulo } from '../../componentes/basicos';
@@ -176,6 +176,29 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
     if (l) setRegion({ latitude: l.coords.latitude, longitude: l.coords.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 });
   }
 
+  const [buscando, setBuscando] = useState(false);
+
+  // Busca el nombre en el mapa (geocodificador de Apple, sin llave) y deja el pin donde lo encuentra.
+  async function buscarEnMapa() {
+    const q = nombre.trim();
+    if (q.length < 3) return;
+    setBuscando(true);
+    try {
+      const [r] = await Location.geocodeAsync(`${q}, Santiago, Chile`);
+      if (!r) {
+        Alert.alert('No lo encontramos', 'Prueba con otro nombre o toca el mapa donde subirán los pasajeros.');
+        return;
+      }
+      setPunto({ latitude: r.latitude, longitude: r.longitude });
+      setRegion({ latitude: r.latitude, longitude: r.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+      if (/metro|estaci[oó]n/i.test(q)) setTipo('metro');
+    } catch {
+      Alert.alert('No se pudo buscar', 'Revisa tu conexión o toca el mapa.');
+    } finally {
+      setBuscando(false);
+    }
+  }
+
   const listo = punto && nombre.trim().length > 1;
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onShow={alAbrir} onRequestClose={onCerrar}>
@@ -189,8 +212,19 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
           {punto && <Marker coordinate={punto} pinColor={color.primario} />}
         </MapView>
         <View style={{ padding: espacio.l, gap: espacio.m }}>
-          {!punto && <Text style={s.textoSuave}>Toca el mapa donde subirán los pasajeros.</Text>}
-          <Campo etiqueta="Nombre" value={nombre} onChangeText={setNombre} placeholder="Ej: Metro Las Rejas" />
+          <Text style={s.textoSuave}>
+            {punto ? 'Puedes mover el pin tocando otro punto del mapa.' : 'Escribe el lugar y búscalo, o toca el mapa.'}
+          </Text>
+          <View style={[s.fila, { alignItems: 'flex-end' }]}>
+            <View style={{ flex: 1 }}>
+              <Campo etiqueta="Nombre" value={nombre} onChangeText={setNombre} placeholder="Ej: Metro Santa Isabel"
+                returnKeyType="search" onSubmitEditing={buscarEnMapa} />
+            </View>
+            <Pressable onPress={buscarEnMapa} accessibilityLabel="Buscar en el mapa" disabled={buscando}
+              style={{ width: TOQUE_MINIMO + 4, height: TOQUE_MINIMO + 4, borderRadius: 10, backgroundColor: color.primario, alignItems: 'center', justifyContent: 'center' }}>
+              {buscando ? <ActivityIndicator color={color.blanco} /> : <Ionicons name="search" size={22} color={color.blanco} />}
+            </Pressable>
+          </View>
           <Segmento valor={tipo} onCambio={setTipo}
             opciones={[{ valor: 'metro', texto: 'Estación de metro' }, { valor: 'punto_fijo', texto: 'Punto fijo' }]} />
           <Campo etiqueta="Minutos después de la salida" value={minutos} onChangeText={setMinutos} keyboardType="number-pad" maxLength={3} />

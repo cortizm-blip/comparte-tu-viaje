@@ -137,7 +137,7 @@ export function MapaViaje({ paraderos, conductor, alto = 260, elegido }: {
           key={p.id}
           coordinate={{ latitude: p.lat, longitude: p.lng }}
           title={p.nombre}
-          pinColor={p.id === elegido ? color.primario : '#8FB8B1'}
+          pinColor={p.id === elegido ? color.primario : color.primarioClaro}
         />
       ))}
       {conductor && (
@@ -163,7 +163,7 @@ const st = StyleSheet.create({
   escalaPrecio: { width: 72, textAlign: 'right', fontSize: 13, color: color.texto },
   marcado: { fontWeight: '700', color: color.texto },
   barraFondo: { flex: 1, height: 6, backgroundColor: color.fondoGris, borderRadius: 3 },
-  barra: { height: 6, backgroundColor: '#B9D6D1', borderRadius: 3 },
+  barra: { height: 6, backgroundColor: color.primarioClaro, borderRadius: 3 },
   paradero: { flexDirection: 'row', alignItems: 'center', gap: espacio.m, minHeight: TOQUE_MINIMO + 8, paddingVertical: 6 },
   punto: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: color.textoSuave },
   puntoActivo: { borderColor: color.primario, backgroundColor: color.primario },

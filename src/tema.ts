@@ -1,7 +1,8 @@
-// Colores, espacios y tipografía de la app (estilo claro tipo iOS, verde azulado de la spec).
+// Colores, espacios y tipografía de la app (estilo claro tipo iOS, azul eléctrico).
 export const color = {
-  primario: '#0B7A6B',
-  primarioSuave: '#E6F2F0',
+  primario: '#1F4FFF',
+  primarioSuave: '#E8EDFF',
+  primarioClaro: '#B4C3FF',
   fondo: '#FFFFFF',
   fondoGris: '#F2F3F5',
   texto: '#111418',
