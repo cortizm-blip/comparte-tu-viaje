@@ -65,6 +65,7 @@ export class RepositorioDemo implements Repositorio {
   private cuentaPorViaje = new Map<string, string>([['v1', 'c1'], ['v2', 'c1']]);
   private inicioEnCurso = new Map<string, number>();
   private perfil: Perfil | null = null;
+  private bloqueadas = new Set<string>();
 
   private copia = (v: Viaje): Viaje => ({ ...v, paraderos: v.paraderos.map((p) => ({ ...p })) });
   private buscar(id: string): Viaje {
@@ -91,11 +92,40 @@ export class RepositorioDemo implements Repositorio {
 
   async guardarPushToken() {}
 
+  async eliminarCuenta() {
+    await espera();
+    if (this.viajes.some((v) => v.conductor.id === YO && ['esperando_pasajeros', 'confirmado', 'en_curso'].includes(v.estado) && v.inscritos > 0)) {
+      throw new Error('Cancela o termina tus viajes con pasajeros antes de eliminar tu cuenta');
+    }
+    this.viajes = this.viajes.filter((v) => v.conductor.id !== YO);
+    this.inscripciones = this.inscripciones.filter((i) => i.pasajeroId !== YO);
+    this.perfil = null;
+    await AsyncStorage.removeItem(CLAVE_PERFIL).catch(() => {});
+  }
+
+  async reportar(d: { viajeId?: string; personaId?: string; motivo: string }) {
+    await espera();
+    if (!d.motivo.trim()) throw new Error('Cuéntanos el motivo');
+  }
+
+  async bloquear(personaId: string) {
+    this.bloqueadas.add(personaId);
+  }
+
+  async desbloquear(personaId: string) {
+    this.bloqueadas.delete(personaId);
+  }
+
+  async bloqueados() {
+    return [...this.bloqueadas];
+  }
+
   async listarViajes() {
     await espera();
     const ahora = Date.now();
     return this.viajes
       .filter((v) => ['esperando_pasajeros', 'confirmado'].includes(v.estado) && Date.parse(v.saleEn) > ahora)
+      .filter((v) => !this.bloqueadas.has(v.conductor.id))
       .sort((a, b) => a.saleEn.localeCompare(b.saleEn))
       .map(this.copia);
   }

@@ -10,6 +10,14 @@ export interface Repositorio {
   iniciarSesion(): Promise<Perfil | null>;
   guardarPerfil(datos: Omit<Perfil, 'id'>): Promise<Perfil>;
   guardarPushToken(token: string): Promise<void>;
+  // Borra la cuenta y todos sus datos (Apple lo exige). Falla si maneja un viaje con pasajeros sin cancelar.
+  eliminarCuenta(): Promise<void>;
+
+  // Seguridad: reportar un viaje o una persona, y bloquear personas (oculta sus viajes).
+  reportar(datos: { viajeId?: string; personaId?: string; motivo: string }): Promise<void>;
+  bloquear(personaId: string): Promise<void>;
+  desbloquear(personaId: string): Promise<void>;
+  bloqueados(): Promise<string[]>;
 
   // Viajes.
   listarViajes(): Promise<Viaje[]>;

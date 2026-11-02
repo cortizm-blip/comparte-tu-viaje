@@ -32,6 +32,19 @@ type FilaCuenta = {
 
 const COLUMNAS_VIAJE = 'id, conductor_id, origen, destino, sale_en, costo_total, cupos, inscritos, estado, notas';
 
+// Corta las consultas que no responden, para que la app muestre "Reintentar" en vez de quedarse pegada.
+const ESPERA_MAXIMA_MS = 15000;
+function fetchConEspera(entrada: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const control = new AbortController();
+  const reloj = setTimeout(() => control.abort(), ESPERA_MAXIMA_MS);
+  init?.signal?.addEventListener('abort', () => control.abort());
+  return fetch(entrada, { ...init, signal: control.signal })
+    .catch((e) => {
+      throw control.signal.aborted && !init?.signal?.aborted ? new Error('Sin conexión. Revisa tu internet e inténtalo de nuevo.') : e;
+    })
+    .finally(() => clearTimeout(reloj));
+}
+
 // Lanza el error de Supabase con su mensaje (las funciones SQL ya lo escriben en español).
 function revisar<T>(r: { data: T; error: { message: string } | null }): T {
   if (r.error) throw new Error(r.error.message);
@@ -52,6 +65,7 @@ export class RepositorioSupabase implements Repositorio {
 
   constructor(url: string, llave: string) {
     this.sb = createClient(url, llave, {
+      global: { fetch: fetchConEspera },
       auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
     });
   }
@@ -118,13 +132,16 @@ export class RepositorioSupabase implements Repositorio {
   }
 
   async listarViajes(): Promise<Viaje[]> {
-    const filas = revisar(
-      await this.sb.from('viajes_con_precio').select(COLUMNAS_VIAJE)
+    const [r, ocultos] = await Promise.all([
+      this.sb.from('viajes_con_precio').select(COLUMNAS_VIAJE)
         .in('estado', ['esperando_pasajeros', 'confirmado'])
         .gt('sale_en', new Date().toISOString())
-        .order('sale_en'),
-    );
-    return this.completar(filas ?? []);
+        .order('sale_en')
+        .limit(200),
+      this.bloqueados(),
+    ]);
+    const filas = (revisar(r) ?? []).filter((f) => !ocultos.includes(f.conductor_id));
+    return this.completar(filas);
   }
 
   async obtenerViaje(id: string): Promise<Viaje | null> {
@@ -279,5 +296,30 @@ export class RepositorioSupabase implements Repositorio {
       await this.sb.from('ubicaciones_conductor').select('lat, lng, actualizado_en').eq('viaje_id', viajeId).maybeSingle(),
     );
     return f ? { lat: f.lat, lng: f.lng, actualizadoEn: f.actualizado_en } : null;
+  }
+
+  async eliminarCuenta(): Promise<void> {
+    revisar(await this.sb.rpc('eliminar_mi_cuenta'));
+    await this.sb.auth.signOut({ scope: 'local' });
+    this.usuarioId = null;
+  }
+
+  async reportar(d: { viajeId?: string; personaId?: string; motivo: string }): Promise<void> {
+    revisar(await this.sb.from('reportes').insert({
+      viaje_id: d.viajeId ?? null, reportado_id: d.personaId ?? null, motivo: d.motivo.trim().slice(0, 500),
+    }));
+  }
+
+  async bloquear(personaId: string): Promise<void> {
+    revisar(await this.sb.from('bloqueos').upsert({ usuario_id: this.yo, bloqueado_id: personaId }));
+  }
+
+  async desbloquear(personaId: string): Promise<void> {
+    revisar(await this.sb.from('bloqueos').delete().eq('usuario_id', this.yo).eq('bloqueado_id', personaId));
+  }
+
+  async bloqueados(): Promise<string[]> {
+    const filas = revisar(await this.sb.from('bloqueos').select('bloqueado_id').eq('usuario_id', this.yo));
+    return (filas ?? []).map((f) => f.bloqueado_id as string);
   }
 }

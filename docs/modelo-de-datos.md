@@ -38,3 +38,12 @@ La vista `viajes_con_precio` entrega inscritos, cupos libres, precio actual y pr
 - `actualizar_ubicacion(viaje, lat, lng)` guarda la posición del conductor y avisa una vez a cada pasajero cuando está a menos de 1 km de su paradero.
 - `informar_pago(viaje)` registra que el pasajero transfirió el precio final; `confirmar_pago(inscripcion)` lo confirma el conductor.
 - Los paraderos guardan `minutos_desde_salida` para mostrar la hora estimada en cada uno, y el perfil guarda auto y patente.
+
+## Seguridad, reportes y borrado de cuenta (0005 y 0006)
+
+- `tokens_push`: token de notificaciones de cada usuario; solo lo lee su dueño y la función de envío.
+- Viajes y paraderos se crean solo con `publicar_viaje()`; el estado solo avanza (esperando → confirmado → en curso → terminado, o cancelado antes de salir).
+- El pasajero puede cancelar solo con el viaje sin empezar.
+- `eliminar_mi_cuenta()`: borra al usuario y todos sus datos; pide cancelar antes los viajes propios con pasajeros.
+- `reportes`: un usuario reporta un viaje o una persona; el equipo los revisa en el panel de Supabase (`revisado_en is null`).
+- `bloqueos`: quien bloquea deja de ver los viajes de esa persona y ninguno puede inscribirse en viajes del otro.
