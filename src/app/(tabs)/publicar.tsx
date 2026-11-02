@@ -3,17 +3,18 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import MapView, { Marker, type LatLng, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Boton, Campo, s, Segmento, Subtitulo, Tarjeta, Titulo } from '../../componentes/basicos';
+import { BotonBuscar, ListaLugares } from '../../componentes/lugares';
 import { EscalaPrecios } from '../../componentes/viaje';
-import { repo, type NuevoParadero, type TipoParadero } from '../../datos';
+import { repo, type Coordenada, type NuevoParadero, type TipoParadero } from '../../datos';
 import { registrarPush } from '../../notificaciones';
 import { armarSalida } from '../../lib/fechas';
 import { buscarLugares, type Lugar } from '../../lib/lugares';
 import { regionPara } from '../../lib/geo';
-import { color, espacio, radio, TOQUE_MINIMO } from '../../tema';
+import { color, espacio, TOQUE_MINIMO } from '../../tema';
 import { useCarga } from '../../useCarga';
 
 const MAX_CUPOS = 8;
@@ -21,6 +22,9 @@ const MAX_CUPOS = 8;
 export default function Publicar() {
   const [origen, setOrigen] = useState('');
   const [destino, setDestino] = useState('');
+  const [destinoUbicacion, setDestinoUbicacion] = useState<Coordenada | null>(null);
+  const [lugaresDestino, setLugaresDestino] = useState<Lugar[]>([]);
+  const [buscandoDestino, setBuscandoDestino] = useState(false);
   const [diaSalida, setDiaSalida] = useState(1);
   const [horaSalida, setHoraSalida] = useState('');
   const [pagado, setPagado] = useState(true);
@@ -34,6 +38,23 @@ export default function Publicar() {
 
   const costoTotal = pagado ? Number(costo.replace(/\D/g, '')) || 0 : 0;
   const salida = armarSalida(diaSalida, horaSalida);
+
+  // Busca el destino en Apple Maps; si hay un solo resultado lo ubica directamente.
+  async function buscarDestino() {
+    const q = destino.trim();
+    if (q.length < 3) return;
+    setBuscandoDestino(true);
+    try {
+      const r = await buscarLugares(q);
+      if (r.length === 0) Alert.alert('No lo encontramos', 'Prueba con la dirección o el nombre del lugar.');
+      if (r.length === 1) setDestinoUbicacion({ lat: r[0].lat, lng: r[0].lng });
+      else setLugaresDestino(r);
+    } catch {
+      Alert.alert('No se pudo buscar', 'Revisa tu conexión e inténtalo de nuevo.');
+    } finally {
+      setBuscandoDestino(false);
+    }
+  }
 
   // Devuelve el primer problema del formulario, o null si se puede publicar.
   function problema(): string | null {
@@ -55,11 +76,11 @@ export default function Publicar() {
     setPublicando(true);
     try {
       const id = await repo.publicarViaje({
-        origen: origen.trim(), destino: destino.trim(), saleEn: salida!, costoTotal, cupos,
+        origen: origen.trim(), destino: destino.trim(), destinoUbicacion, saleEn: salida!, costoTotal, cupos,
         cuentaCobroId: pagado ? (cuenta?.id ?? null) : null, paraderos, notas: notas.trim() || null,
       });
       registrarPush({ pedir: true }).catch(() => {});
-      setOrigen(''); setDestino(''); setHoraSalida(''); setCosto(''); setParaderos([]); setNotas('');
+      setOrigen(''); setDestino(''); setDestinoUbicacion(null); setHoraSalida(''); setCosto(''); setParaderos([]); setNotas('');
       router.push(`/viaje/${id}`);
     } catch (e) {
       Alert.alert('No se pudo publicar', e instanceof Error ? e.message : 'Inténtalo de nuevo');
@@ -77,7 +98,22 @@ export default function Publicar() {
             <Text style={s.textoSuave}>Un viaje que ya vas a hacer, 1 o 2 días antes</Text>
           </View>
           <Campo etiqueta="Desde" value={origen} onChangeText={setOrigen} placeholder="Ej: Metro Ñuble" />
-          <Campo etiqueta="Hasta" value={destino} onChangeText={setDestino} placeholder="Ej: Campus Lo Contador" />
+          <View style={[s.fila, { alignItems: 'flex-end' }]}>
+            <View style={{ flex: 1 }}>
+              <Campo etiqueta="Hasta" value={destino} placeholder="Ej: Campus Lo Contador" returnKeyType="search"
+                onChangeText={(t) => { setDestino(t); setDestinoUbicacion(null); setLugaresDestino([]); }}
+                onSubmitEditing={buscarDestino} />
+            </View>
+            <BotonBuscar onPress={buscarDestino} buscando={buscandoDestino} />
+          </View>
+          <ListaLugares lugares={lugaresDestino} onElegir={(l) => {
+            setDestinoUbicacion({ lat: l.lat, lng: l.lng });
+            setLugaresDestino([]);
+            Keyboard.dismiss();
+          }} />
+          <Text style={s.textoSuave}>
+            {destinoUbicacion ? '✓ Destino ubicado en el mapa: así te encuentran quienes van cerca.' : 'Toca la lupa para ubicar el destino y que te encuentren quienes van cerca.'}
+          </Text>
           <Text style={s.etiqueta}>Salida</Text>
           <Segmento valor={diaSalida} onCambio={setDiaSalida}
             opciones={[{ valor: 0, texto: 'Hoy' }, { valor: 1, texto: 'Mañana' }, { valor: 2, texto: 'Pasado mañana' }]} />
@@ -234,28 +270,9 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
               <Campo etiqueta="Nombre" value={nombre} onChangeText={setNombre} placeholder="Ej: Metro Santa Isabel"
                 returnKeyType="search" onSubmitEditing={buscarEnMapa} />
             </View>
-            <Pressable onPress={buscarEnMapa} accessibilityLabel="Buscar en el mapa" disabled={buscando}
-              style={{ width: TOQUE_MINIMO + 4, height: TOQUE_MINIMO + 4, borderRadius: 10, backgroundColor: color.primario, alignItems: 'center', justifyContent: 'center' }}>
-              {buscando ? <ActivityIndicator color={color.blanco} /> : <Ionicons name="search" size={22} color={color.blanco} />}
-            </Pressable>
+            <BotonBuscar onPress={buscarEnMapa} buscando={buscando} />
           </View>
-          {resultados.length > 0 && (
-            <View style={{ borderWidth: 1, borderColor: color.borde, borderRadius: radio.medio }}>
-              {resultados.map((l, i) => (
-                <Pressable key={`${l.lat},${l.lng}`} onPress={() => elegir(l)} accessibilityRole="button"
-                  style={({ pressed }) => [s.fila, {
-                    minHeight: TOQUE_MINIMO + 8, paddingHorizontal: espacio.m, gap: espacio.m,
-                    borderTopWidth: i === 0 ? 0 : 1, borderColor: color.borde, opacity: pressed ? 0.6 : 1,
-                  }]}>
-                  <Ionicons name="location" size={20} color={color.primario} />
-                  <View style={{ flex: 1, paddingVertical: espacio.s }}>
-                    <Text style={s.texto} numberOfLines={1}>{l.nombre}</Text>
-                    {l.direccion && <Text style={s.textoSuave} numberOfLines={1}>{l.direccion}</Text>}
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          )}
+          <ListaLugares lugares={resultados} onElegir={elegir} />
           <Segmento valor={tipo} onCambio={setTipo}
             opciones={[{ valor: 'metro', texto: 'Estación de metro' }, { valor: 'punto_fijo', texto: 'Punto fijo' }]} />
           <Campo etiqueta="Minutos después de la salida" value={minutos} onChangeText={setMinutos} keyboardType="number-pad" maxLength={3} />

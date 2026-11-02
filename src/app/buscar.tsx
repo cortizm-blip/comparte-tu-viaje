@@ -1,23 +1,23 @@
-// Buscar: ubica en el mapa la dirección o lugar al que vas (Apple Maps) y muestra los viajes con paraderos cerca;
+// Buscar: ubica en el mapa la dirección o lugar al que vas (Apple Maps) y muestra los viajes que llegan cerca de ahí;
 // sin lugar elegido, filtra los viajes por destino, origen o paradero. También filtra por día de salida.
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, ScrollView, Text, TextInput, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Estado, s, Segmento } from '../componentes/basicos';
+import { BotonBuscar, ListaLugares } from '../componentes/lugares';
 import { TarjetaViaje } from '../componentes/viaje';
 import { repo, type Viaje } from '../datos';
 import { dia } from '../lib/fechas';
-import { regionPara, viajesCerca } from '../lib/geo';
+import { regionPara, viajesHacia } from '../lib/geo';
 import { buscarLugares, type Lugar } from '../lib/lugares';
-import { color, espacio, radio, TOQUE_MINIMO } from '../tema';
+import { color, espacio, radio } from '../tema';
 import { useCarga } from '../useCarga';
 import { usePermisoUbicacion } from '../usePermisoUbicacion';
 
 type Dia = 'todos' | 'Hoy' | 'Mañana' | 'Pasado mañana';
 
-const RADIO_CERCA_M = 3000;
+const RADIO_DESTINO_M = 2000;
 
 const normalizar = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -44,10 +44,10 @@ export default function Buscar() {
   const mapa = useRef<MapView>(null);
 
   const delDia = useMemo(() => (datos ?? []).filter((v) => cuando === 'todos' || dia(v.saleEn) === cuando), [datos, cuando]);
-  const cercanos = useMemo(() => (lugar ? viajesCerca(delDia, lugar, RADIO_CERCA_M) : []), [delDia, lugar]);
+  const hacia = useMemo(() => (lugar ? viajesHacia(delDia, lugar, RADIO_DESTINO_M) : []), [delDia, lugar]);
   const porTexto = useMemo(() => (lugar ? [] : delDia.filter((v) => coincide(v, texto))), [delDia, lugar, texto]);
   const paraderos = useMemo(
-    () => (lugar ? cercanos.map((c) => c.viaje) : porTexto).flatMap((v) => v.paraderos), [lugar, cercanos, porTexto]);
+    () => (lugar ? hacia.map((c) => c.viaje) : porTexto).flatMap((v) => v.paraderos), [lugar, hacia, porTexto]);
 
   // Mueve el mapa solo al elegir un lugar o cuando cambian los paraderos mostrados, no en cada tecla.
   const claveParaderos = paraderos.map((p) => p.id).join();
@@ -111,29 +111,10 @@ export default function Buscar() {
             clearButtonMode="while-editing"
             style={{ flex: 1, minHeight: 52, backgroundColor: color.fondoGris, borderRadius: radio.medio, paddingHorizontal: espacio.l, fontSize: 17 }}
           />
-          <Pressable onPress={buscarEnMapa} accessibilityLabel="Buscar en el mapa" disabled={buscando}
-            style={{ width: 52, height: 52, borderRadius: radio.medio, backgroundColor: color.primario, alignItems: 'center', justifyContent: 'center' }}>
-            {buscando ? <ActivityIndicator color={color.blanco} /> : <Ionicons name="search" size={22} color={color.blanco} />}
-          </Pressable>
+          <BotonBuscar onPress={buscarEnMapa} buscando={buscando} />
         </View>
 
-        {lugares.length > 0 && (
-          <View style={{ borderWidth: 1, borderColor: color.borde, borderRadius: radio.medio }}>
-            {lugares.map((l, i) => (
-              <Pressable key={`${l.lat},${l.lng}`} onPress={() => elegir(l)} accessibilityRole="button"
-                style={({ pressed }) => [s.fila, {
-                  minHeight: TOQUE_MINIMO + 8, paddingHorizontal: espacio.m, gap: espacio.m,
-                  borderTopWidth: i === 0 ? 0 : 1, borderColor: color.borde, opacity: pressed ? 0.6 : 1,
-                }]}>
-                <Ionicons name="location" size={20} color={color.primario} />
-                <View style={{ flex: 1, paddingVertical: espacio.s }}>
-                  <Text style={s.texto} numberOfLines={1}>{l.nombre}</Text>
-                  {l.direccion && <Text style={s.textoSuave} numberOfLines={1}>{l.direccion}</Text>}
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        )}
+        <ListaLugares lugares={lugares} onElegir={elegir} />
 
         <Segmento<Dia>
           valor={cuando}
@@ -147,14 +128,16 @@ export default function Buscar() {
         {lugar ? (
           <>
             <View>
-              <Text style={s.subtitulo}>Viajes cerca de {lugar.nombre}</Text>
-              <Text style={s.textoSuave}>Con un paradero a menos de {distanciaTexto(RADIO_CERCA_M)}</Text>
+              <Text style={s.subtitulo}>Viajes hacia {lugar.nombre}</Text>
+              <Text style={s.textoSuave}>Que llegan a menos de {distanciaTexto(RADIO_DESTINO_M)} de tu destino</Text>
             </View>
             <Estado cargando={cargando} error={error} onReintentar={recargar}
-              vacio={datos && cercanos.length === 0 ? 'Todavía no hay viajes que pasen cerca. Prueba otro día o publica el tuyo.' : undefined} />
-            {cercanos.map((c) => (
+              vacio={datos && hacia.length === 0 ? 'Todavía no hay viajes que lleguen cerca. Prueba otro día o publica el tuyo.' : undefined} />
+            {hacia.map((c) => (
               <View key={c.viaje.id} style={{ gap: espacio.xs }}>
-                <Text style={s.textoSuave}>Sube en {c.paradero.nombre} · a {distanciaTexto(c.distanciaM)}</Text>
+                <Text style={s.textoSuave}>
+                  Llega a {distanciaTexto(c.distanciaM)} de tu destino{c.viaje.paraderos[0] ? ` · sube en ${c.viaje.paraderos[0].nombre}` : ''}
+                </Text>
                 <TarjetaViaje viaje={c.viaje} onPress={() => router.push(`/viaje/${c.viaje.id}`)} />
               </View>
             ))}
@@ -163,7 +146,7 @@ export default function Buscar() {
           <>
             <View>
               <Text style={s.subtitulo}>Elige tu viaje</Text>
-              <Text style={s.textoSuave}>Busca una dirección para ver los viajes que pasan cerca</Text>
+              <Text style={s.textoSuave}>Busca tu destino para ver los viajes que llegan cerca</Text>
             </View>
             <Estado cargando={cargando} error={error} onReintentar={recargar}
               vacio={datos && porTexto.length === 0 ? 'No hay viajes con ese nombre. Toca la lupa para buscar la dirección en el mapa.' : undefined} />
