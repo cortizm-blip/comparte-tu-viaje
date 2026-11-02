@@ -52,7 +52,7 @@ export function Campo({ etiqueta, ...props }: TextInputProps & { etiqueta: strin
   return (
     <View style={{ gap: espacio.xs }}>
       <Text style={s.etiqueta}>{etiqueta}</Text>
-      <TextInput placeholderTextColor={color.textoSuave} style={s.campo} {...props} />
+      <TextInput placeholderTextColor={color.textoSuave} style={s.campo} accessibilityLabel={etiqueta} {...props} />
     </View>
   );
 }

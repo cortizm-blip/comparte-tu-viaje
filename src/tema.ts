@@ -1,6 +1,6 @@
 // Colores, espacios y tipografía de la app (estilo claro tipo iOS, rojo-naranja de la marca InTraffic).
 export const color = {
-  primario: '#F0331F',
+  primario: '#D42A17',
   primarioSuave: '#FFEEE8',
   primarioClaro: '#FFC3AE',
   // Degradado del logo, de arriba (rojo) a abajo (naranja).

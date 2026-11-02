@@ -1,9 +1,9 @@
 // Detalle del viaje: precio de hoy, escala de precios, paraderos y conductor.
 // Según quién mira muestra inscribirse, la inscripción propia o el panel del conductor.
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, Switch, Text, View } from 'react-native';
+import { ActionSheetIOS, Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Boton, Estado, InsigniaEstado, s, Subtitulo, Tarjeta } from '../../../componentes/basicos';
 import { EscalaPrecios, ListaParaderos, MapaViaje, Ruta } from '../../../componentes/viaje';
@@ -49,6 +49,15 @@ export default function DetalleViaje() {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.fondo }}>
+      {!soyConductor && (
+        <Stack.Screen options={{
+          headerRight: () => (
+            <Pressable onPress={() => opcionesSeguridad(viaje)} hitSlop={12} accessibilityRole="button" accessibilityLabel="Reportar o bloquear">
+              <Ionicons name="ellipsis-horizontal-circle" size={26} color={color.texto} />
+            </Pressable>
+          ),
+        }} />
+      )}
       <ScrollView contentContainerStyle={{ paddingBottom: 140 + abajo }}>
         <MapaViaje paraderos={viaje.paraderos} elegido={elegido} alto={220} />
         <View style={{ padding: espacio.l, gap: espacio.m }}>
@@ -235,4 +244,50 @@ function PanelConductor({ viaje }: { viaje: Viaje }) {
       ))}
     </>
   );
+}
+
+const MOTIVOS = ['Contenido ofensivo', 'Información falsa o engañosa', 'Conducta peligrosa', 'Cobro abusivo', 'Otro'];
+
+// Menú de seguridad del detalle: reportar el viaje o bloquear al conductor (oculta sus viajes).
+function opcionesSeguridad(viaje: Viaje) {
+  ActionSheetIOS.showActionSheetWithOptions(
+    { options: ['Reportar viaje', `Bloquear a ${viaje.conductor.nombre}`, 'Cancelar'], destructiveButtonIndex: 1, cancelButtonIndex: 2 },
+    (i) => {
+      if (i === 0) elegirMotivo(viaje);
+      if (i === 1) confirmarBloqueo(viaje);
+    },
+  );
+}
+
+// Pide el motivo y envía el reporte del viaje y su conductor.
+function elegirMotivo(viaje: Viaje) {
+  ActionSheetIOS.showActionSheetWithOptions(
+    { title: '¿Por qué reportas este viaje?', options: [...MOTIVOS, 'Cancelar'], cancelButtonIndex: MOTIVOS.length },
+    async (i) => {
+      if (i >= MOTIVOS.length) return;
+      try {
+        await repo.reportar({ viajeId: viaje.id, personaId: viaje.conductor.id, motivo: MOTIVOS[i] });
+        Alert.alert('Gracias por avisar', 'Revisaremos el reporte. Si alguien está en peligro, llama al 133.');
+      } catch (e) {
+        Alert.alert('No se pudo reportar', e instanceof Error ? e.message : 'Inténtalo de nuevo');
+      }
+    },
+  );
+}
+
+// Bloquea al conductor: sus viajes dejan de aparecer y se vuelve a la pantalla anterior.
+function confirmarBloqueo(viaje: Viaje) {
+  Alert.alert(`¿Bloquear a ${viaje.conductor.nombre}?`, 'No volverás a ver sus viajes.', [
+    { text: 'Volver', style: 'cancel' },
+    {
+      text: 'Bloquear', style: 'destructive', onPress: async () => {
+        try {
+          await repo.bloquear(viaje.conductor.id);
+          router.back();
+        } catch (e) {
+          Alert.alert('No se pudo bloquear', e instanceof Error ? e.message : 'Inténtalo de nuevo');
+        }
+      },
+    },
+  ]);
 }

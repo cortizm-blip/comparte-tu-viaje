@@ -8,6 +8,7 @@ type Sesion = {
   error: string | null;
   perfil: Perfil | null;
   guardarPerfil: (datos: Omit<Perfil, 'id'>) => Promise<void>;
+  eliminarCuenta: () => Promise<void>;
   reintentar: () => void;
 };
 
@@ -43,8 +44,15 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     registrarPush().catch(() => {});
   }, []);
 
+  // Borra la cuenta y abre una sesión anónima nueva, que vuelve a la bienvenida.
+  const eliminarCuenta = useCallback(async () => {
+    await repo.eliminarCuenta();
+    setPerfil(null);
+    await iniciar();
+  }, [iniciar]);
+
   return (
-    <Contexto.Provider value={{ cargando, error, perfil, guardarPerfil, reintentar: iniciar }}>
+    <Contexto.Provider value={{ cargando, error, perfil, guardarPerfil, eliminarCuenta, reintentar: iniciar }}>
       {children}
     </Contexto.Provider>
   );
