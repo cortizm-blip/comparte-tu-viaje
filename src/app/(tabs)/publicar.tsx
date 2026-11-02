@@ -3,15 +3,16 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import MapView, { Marker, type LatLng } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Boton, Campo, s, Segmento, Subtitulo, Tarjeta, Titulo } from '../../componentes/basicos';
 import { EscalaPrecios } from '../../componentes/viaje';
 import { repo, type NuevoParadero, type TipoParadero } from '../../datos';
 import { armarSalida } from '../../lib/fechas';
+import { buscarLugares, type Lugar } from '../../lib/lugares';
 import { regionPara } from '../../lib/geo';
-import { color, espacio, TOQUE_MINIMO } from '../../tema';
+import { color, espacio, radio, TOQUE_MINIMO } from '../../tema';
 import { useCarga } from '../../useCarga';
 
 const MAX_CUPOS = 8;
@@ -168,7 +169,7 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
 
   // Al abrir, centra el mapa en el último paradero o en la ubicación actual.
   async function alAbrir() {
-    setPunto(null); setNombre(''); setTipo('metro'); setMinutos(cerca ? String(cerca.minutosDesdeSalida + 10) : '0');
+    setPunto(null); setNombre(''); setResultados([]); setTipo('metro'); setMinutos(cerca ? String(cerca.minutosDesdeSalida + 10) : '0');
     if (cerca) return setRegion({ ...regionPara([cerca]), latitudeDelta: 0.05, longitudeDelta: 0.05 });
     const permiso = await Location.requestForegroundPermissionsAsync().catch(() => null);
     if (!permiso?.granted) return;
@@ -178,25 +179,34 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
 
   const [buscando, setBuscando] = useState(false);
 
-  // Busca el nombre en el mapa (geocodificador de Apple, sin llave) y deja el pin donde lo encuentra.
+  const [resultados, setResultados] = useState<Lugar[]>([]);
+
+  // Busca el nombre con Apple Maps y muestra los lugares encontrados para elegir uno.
   async function buscarEnMapa() {
     const q = nombre.trim();
     if (q.length < 3) return;
     setBuscando(true);
     try {
-      const [r] = await Location.geocodeAsync(`${q}, Santiago, Chile`);
-      if (!r) {
+      const lugares = await buscarLugares(q);
+      if (lugares.length === 0) {
         Alert.alert('No lo encontramos', 'Prueba con otro nombre o toca el mapa donde subirán los pasajeros.');
-        return;
       }
-      setPunto({ latitude: r.latitude, longitude: r.longitude });
-      setRegion({ latitude: r.latitude, longitude: r.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 });
-      if (/metro|estaci[oó]n/i.test(q)) setTipo('metro');
+      setResultados(lugares);
     } catch {
       Alert.alert('No se pudo buscar', 'Revisa tu conexión o toca el mapa.');
     } finally {
       setBuscando(false);
     }
+  }
+
+  // Deja el pin en el lugar elegido y acerca el mapa.
+  function elegir(l: Lugar) {
+    setPunto({ latitude: l.lat, longitude: l.lng });
+    setRegion({ latitude: l.lat, longitude: l.lng, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+    if (!nombre.trim()) setNombre(l.nombre);
+    if (/metro|estaci[oó]n/i.test(`${nombre} ${l.nombre}`)) setTipo('metro');
+    setResultados([]);
+    Keyboard.dismiss();
   }
 
   const listo = punto && nombre.trim().length > 1;
@@ -225,6 +235,23 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
               {buscando ? <ActivityIndicator color={color.blanco} /> : <Ionicons name="search" size={22} color={color.blanco} />}
             </Pressable>
           </View>
+          {resultados.length > 0 && (
+            <View style={{ borderWidth: 1, borderColor: color.borde, borderRadius: radio.medio }}>
+              {resultados.map((l, i) => (
+                <Pressable key={`${l.lat},${l.lng}`} onPress={() => elegir(l)} accessibilityRole="button"
+                  style={({ pressed }) => [s.fila, {
+                    minHeight: TOQUE_MINIMO + 8, paddingHorizontal: espacio.m, gap: espacio.m,
+                    borderTopWidth: i === 0 ? 0 : 1, borderColor: color.borde, opacity: pressed ? 0.6 : 1,
+                  }]}>
+                  <Ionicons name="location" size={20} color={color.primario} />
+                  <View style={{ flex: 1, paddingVertical: espacio.s }}>
+                    <Text style={s.texto} numberOfLines={1}>{l.nombre}</Text>
+                    {l.direccion && <Text style={s.textoSuave} numberOfLines={1}>{l.direccion}</Text>}
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
           <Segmento valor={tipo} onCambio={setTipo}
             opciones={[{ valor: 'metro', texto: 'Estación de metro' }, { valor: 'punto_fijo', texto: 'Punto fijo' }]} />
           <Campo etiqueta="Minutos después de la salida" value={minutos} onChangeText={setMinutos} keyboardType="number-pad" maxLength={3} />
