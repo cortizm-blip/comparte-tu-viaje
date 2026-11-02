@@ -11,6 +11,17 @@ npx expo start
 
 Escanea el código QR con la cámara del iPhone. Sin archivo `.env` la app corre en **modo demo**: viajes de ejemplo en memoria, botones para simular que se inscribe otra persona y para simular el día del viaje (mapa con el conductor avanzando y pago).
 
+## 1b. Instalar en el iPhone con Xcode (sin Expo Go)
+
+Con el iPhone conectado por cable y tu Apple ID agregado en Xcode → Settings → Accounts:
+
+```sh
+npm install
+npx expo run:ios --device --configuration Release
+```
+
+Con una cuenta de Apple **gratuita** (Personal Team) hay tres límites: la app deja de abrir a los 7 días, no se pueden usar notificaciones push y el identificador `cl.compartetuviaje.app` puede no servir. En ese caso cambia `ios.bundleIdentifier` en `app.json` por uno propio, quita la capacidad Push Notifications del proyecto en `ios/` y compila desde Xcode o con `xcodebuild ... -allowProvisioningUpdates DEVELOPMENT_TEAM=<tu equipo>`. Para push y TestFlight se necesita la cuenta Apple Developer pagada.
+
 ## 2. Conectar Supabase (datos reales)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) (región São Paulo es la más cercana a Chile).
