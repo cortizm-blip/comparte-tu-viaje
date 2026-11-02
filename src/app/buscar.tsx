@@ -2,7 +2,7 @@
 // sin lugar elegido, filtra los viajes por destino, origen o paradero. También filtra por día de salida.
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Estado, s, Segmento } from '../componentes/basicos';
@@ -13,6 +13,7 @@ import { regionPara, viajesCerca } from '../lib/geo';
 import { buscarLugares, type Lugar } from '../lib/lugares';
 import { color, espacio, radio, TOQUE_MINIMO } from '../tema';
 import { useCarga } from '../useCarga';
+import { usePermisoUbicacion } from '../usePermisoUbicacion';
 
 type Dia = 'todos' | 'Hoy' | 'Mañana' | 'Pasado mañana';
 
@@ -39,13 +40,22 @@ export default function Buscar() {
   const [buscando, setBuscando] = useState(false);
   const { datos, cargando, error, recargar } = useCarga(() => repo.listarViajes());
 
-  const delDia = (datos ?? []).filter((v) => cuando === 'todos' || dia(v.saleEn) === cuando);
-  const cercanos = lugar ? viajesCerca(delDia, lugar, RADIO_CERCA_M) : [];
-  const porTexto = lugar ? [] : delDia.filter((v) => coincide(v, texto));
-  const paraderos = (lugar ? cercanos.map((c) => c.viaje) : porTexto).flatMap((v) => v.paraderos);
-  const region = lugar
-    ? { latitude: lugar.lat, longitude: lugar.lng, latitudeDelta: 0.04, longitudeDelta: 0.04 }
-    : regionPara(paraderos);
+  const ubicacion = usePermisoUbicacion();
+  const mapa = useRef<MapView>(null);
+
+  const delDia = useMemo(() => (datos ?? []).filter((v) => cuando === 'todos' || dia(v.saleEn) === cuando), [datos, cuando]);
+  const cercanos = useMemo(() => (lugar ? viajesCerca(delDia, lugar, RADIO_CERCA_M) : []), [delDia, lugar]);
+  const porTexto = useMemo(() => (lugar ? [] : delDia.filter((v) => coincide(v, texto))), [delDia, lugar, texto]);
+  const paraderos = useMemo(
+    () => (lugar ? cercanos.map((c) => c.viaje) : porTexto).flatMap((v) => v.paraderos), [lugar, cercanos, porTexto]);
+
+  // Mueve el mapa solo al elegir un lugar o cuando cambian los paraderos mostrados, no en cada tecla.
+  const claveParaderos = paraderos.map((p) => p.id).join();
+  useEffect(() => {
+    if (lugar) mapa.current?.animateToRegion({ latitude: lugar.lat, longitude: lugar.lng, latitudeDelta: 0.04, longitudeDelta: 0.04 }, 400);
+    else if (paraderos.length) mapa.current?.animateToRegion(regionPara(paraderos), 400);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lugar, claveParaderos]);
 
   // Busca la dirección o lugar en Apple Maps; si hay uno solo, lo elige directamente.
   async function buscarEnMapa() {
@@ -81,7 +91,7 @@ export default function Buscar() {
   return (
     <ScrollView style={{ backgroundColor: color.fondo }} contentContainerStyle={{ paddingBottom: espacio.xl * 2 }}
       keyboardShouldPersistTaps="handled">
-      <MapView style={{ height: 240 }} region={region} showsUserLocation>
+      <MapView ref={mapa} style={{ height: 240 }} initialRegion={regionPara([])} showsUserLocation={ubicacion}>
         {lugar && <Marker coordinate={{ latitude: lugar.lat, longitude: lugar.lng }} title={lugar.nombre} pinColor={color.primario} />}
         {paraderos.map((p) => (
           <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} title={p.nombre} pinColor={color.marcaNaranja} />

@@ -14,10 +14,12 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// Pide permiso, obtiene el token de Expo y lo guarda en el perfil. En simulador no hace nada.
-export async function registrarPush(): Promise<string | null> {
+// Obtiene el token de Expo y lo guarda. Solo pide permiso con "pedir" (en contexto: al inscribirse,
+// publicar o seguir un viaje); al abrir la app solo registra si ya estaba concedido. En simulador no hace nada.
+export async function registrarPush({ pedir = false } = {}): Promise<string | null> {
   if (!Device.isDevice) return null;
   const actual = await Notifications.getPermissionsAsync();
+  if (!actual.granted && !pedir) return null;
   const permiso = actual.granted ? actual : await Notifications.requestPermissionsAsync();
   if (!permiso.granted) return null;
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;

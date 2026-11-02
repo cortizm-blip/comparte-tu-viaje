@@ -20,7 +20,11 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Usamos tu ubicación para mostrarte paraderos cercanos y, si conduces, para avisar a tus pasajeros que vas llegando."
+          "locationWhenInUsePermission": "Usamos tu ubicación para mostrarte paraderos cercanos y, si conduces, para avisar a tus pasajeros que vas llegando.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "locationFullAccuracyPermission": false,
+          "motionUsagePermission": false
         }
       ],
       [

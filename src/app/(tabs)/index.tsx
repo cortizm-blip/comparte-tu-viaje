@@ -2,6 +2,7 @@
 // búsqueda "¿A dónde vas?", destinos con viajes publicados y viajes que salen pronto.
 import { Ionicons } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
+import { useEffect, useMemo, useRef } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { repo, type Viaje } from '../../datos';
 import { diaYHora } from '../../lib/fechas';
 import { regionPara } from '../../lib/geo';
 import { useSesion } from '../../sesion';
+import { usePermisoUbicacion } from '../../usePermisoUbicacion';
 import { color, espacio, radio, TOQUE_MINIMO } from '../../tema';
 import { useCarga } from '../../useCarga';
 
@@ -26,7 +28,15 @@ export default function Inicio() {
   const { perfil } = useSesion();
   const arriba = useSafeAreaInsets().top;
   const { datos: viajes, cargando, error, recargar } = useCarga(() => repo.listarViajes());
-  const paraderos = (viajes ?? []).flatMap((v) => v.paraderos);
+  const paraderos = useMemo(() => (viajes ?? []).flatMap((v) => v.paraderos), [viajes]);
+  const ubicacion = usePermisoUbicacion();
+  const mapa = useRef<MapView>(null);
+  // Encuadra los paraderos solo cuando cambian, sin pisar lo que la persona movió en el mapa.
+  const claveParaderos = paraderos.map((p) => p.id).join();
+  useEffect(() => {
+    if (paraderos.length) mapa.current?.animateToRegion(regionPara(paraderos), 400);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claveParaderos]);
 
   // Un acceso por destino, con el primer viaje que sale hacia allá.
   const destinos = new Map<string, Viaje>();
@@ -35,7 +45,7 @@ export default function Inicio() {
   return (
     <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <MapView style={{ position: 'absolute', top: 0, left: 0, right: 0, height: ALTO_MAPA + 40 }}
-        region={regionPara(paraderos)} showsUserLocation>
+        ref={mapa} initialRegion={regionPara([])} showsUserLocation={ubicacion} legalLabelInsets={{ top: 0, left: 0, right: 0, bottom: 48 }}>
         {paraderos.map((p) => (
           <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} title={p.nombre} pinColor={color.primario} />
         ))}

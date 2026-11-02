@@ -2,13 +2,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
-import MapView, { Marker, type LatLng } from 'react-native-maps';
+import MapView, { Marker, type LatLng, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Boton, Campo, s, Segmento, Subtitulo, Tarjeta, Titulo } from '../../componentes/basicos';
 import { EscalaPrecios } from '../../componentes/viaje';
 import { repo, type NuevoParadero, type TipoParadero } from '../../datos';
+import { registrarPush } from '../../notificaciones';
 import { armarSalida } from '../../lib/fechas';
 import { buscarLugares, type Lugar } from '../../lib/lugares';
 import { regionPara } from '../../lib/geo';
@@ -57,6 +58,7 @@ export default function Publicar() {
         origen: origen.trim(), destino: destino.trim(), saleEn: salida!, costoTotal, cupos,
         cuentaCobroId: pagado ? (cuenta?.id ?? null) : null, paraderos, notas: notas.trim() || null,
       });
+      registrarPush({ pedir: true }).catch(() => {});
       setOrigen(''); setDestino(''); setHoraSalida(''); setCosto(''); setParaderos([]); setNotas('');
       router.push(`/viaje/${id}`);
     } catch (e) {
@@ -165,16 +167,18 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState<TipoParadero>('metro');
   const [minutos, setMinutos] = useState('0');
-  const [region, setRegion] = useState(regionPara(cerca ? [cerca] : []));
+  const mapa = useRef<MapView>(null);
+  // Mueve el mapa sin controlarlo en cada render (evita el ciclo region ↔ onRegionChangeComplete).
+  const mover = (r: Region) => mapa.current?.animateToRegion(r, 300);
 
   // Al abrir, centra el mapa en el último paradero o en la ubicación actual.
   async function alAbrir() {
     setPunto(null); setNombre(''); setResultados([]); setTipo('metro'); setMinutos(cerca ? String(cerca.minutosDesdeSalida + 10) : '0');
-    if (cerca) return setRegion({ ...regionPara([cerca]), latitudeDelta: 0.05, longitudeDelta: 0.05 });
+    if (cerca) return mover({ ...regionPara([cerca]), latitudeDelta: 0.05, longitudeDelta: 0.05 });
     const permiso = await Location.requestForegroundPermissionsAsync().catch(() => null);
     if (!permiso?.granted) return;
     const l = await Location.getLastKnownPositionAsync().catch(() => null);
-    if (l) setRegion({ latitude: l.coords.latitude, longitude: l.coords.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 });
+    if (l) mover({ latitude: l.coords.latitude, longitude: l.coords.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 });
   }
 
   const [buscando, setBuscando] = useState(false);
@@ -202,7 +206,7 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
   // Deja el pin en el lugar elegido y acerca el mapa.
   function elegir(l: Lugar) {
     setPunto({ latitude: l.lat, longitude: l.lng });
-    setRegion({ latitude: l.lat, longitude: l.lng, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+    mover({ latitude: l.lat, longitude: l.lng, latitudeDelta: 0.01, longitudeDelta: 0.01 });
     if (!nombre.trim()) setNombre(l.nombre);
     if (/metro|estaci[oó]n/i.test(`${nombre} ${l.nombre}`)) setTipo('metro');
     setResultados([]);
@@ -215,9 +219,9 @@ function NuevoParaderoModal({ visible, cerca, onCerrar, onAgregar }: {
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: color.fondo }}>
         <View style={[s.fila, { justifyContent: 'space-between', padding: espacio.l }]}>
           <Text style={s.subtitulo}>Nuevo paradero</Text>
-          <Pressable onPress={onCerrar} hitSlop={12}><Text style={{ color: color.primario, fontSize: 17 }}>Cancelar</Text></Pressable>
+          <Pressable onPress={onCerrar} hitSlop={12} accessibilityRole="button"><Text style={{ color: color.primario, fontSize: 17 }}>Cancelar</Text></Pressable>
         </View>
-        <MapView style={{ flex: 1 }} region={region} onRegionChangeComplete={setRegion} showsUserLocation
+        <MapView ref={mapa} style={{ flex: 1 }} initialRegion={regionPara(cerca ? [cerca] : [])} showsUserLocation
           onPress={(e) => setPunto(e.nativeEvent.coordinate)}>
           {punto && <Marker coordinate={punto} pinColor={color.primario} />}
         </MapView>

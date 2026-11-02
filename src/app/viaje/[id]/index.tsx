@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Boton, Estado, InsigniaEstado, s, Subtitulo, Tarjeta } from '../../../componentes/basicos';
 import { EscalaPrecios, ListaParaderos, MapaViaje, Ruta } from '../../../componentes/viaje';
 import { repo, type EstadoViaje, type Viaje } from '../../../datos';
+import { registrarPush } from '../../../notificaciones';
 import { diaYHora, hora, sumarMinutos } from '../../../lib/fechas';
 import { formatoCLP, precioPorPersona } from '../../../lib/precio';
 import { useSesion } from '../../../sesion';
@@ -83,7 +84,11 @@ export default function DetalleViaje() {
           {!inscripcion && !soyConductor && (
             <View style={[s.fila, { justifyContent: 'space-between', marginTop: espacio.s }]}>
               <Text style={s.texto}>Avisarme si baja el precio</Text>
-              <Switch value={sigo} onValueChange={(v) => hacer(() => repo.seguirViaje(viaje.id, v))} trackColor={{ true: color.primario }} />
+              <Switch value={sigo} accessibilityLabel="Avisarme si baja el precio" trackColor={{ true: color.primario }}
+                onValueChange={(v) => hacer(async () => {
+                  await repo.seguirViaje(viaje.id, v);
+                  if (v) registrarPush({ pedir: true }).catch(() => {});
+                })} />
             </View>
           )}
           {repo.simularDiaDelViaje && inscripcion && viaje.estado !== 'en_curso' && viaje.estado !== 'terminado' && (
@@ -112,6 +117,7 @@ export default function DetalleViaje() {
             cargando={ocupado}
             onPress={() => hacer(async () => {
               await repo.inscribirse(viaje.id, paradero ?? viaje.paraderos[0]?.id ?? null);
+              registrarPush({ pedir: true }).catch(() => {});
               router.replace(`/viaje/${viaje.id}/inscrito`);
             })}
           />
