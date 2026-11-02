@@ -1,0 +1,941 @@
+<title>Comparte tu viaje en iPhone</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: teléfono a la izquierda (fijo al hacer scroll), panel de estado del proyecto a la derecha; en móvil se apilan. */
+:root {
+  --bg: #EEF2F1;
+  --surface: #FFFFFF;
+  --ink: #12201E;
+  --muted: #5A6967;
+  --line: #D6DFDC;
+  --accent: #0B7A6B;
+  --accent-soft: #DDEFEB;
+  --ok: #1E7F48;
+  --ok-soft: #E1F2E7;
+  --warn: #9A6412;
+  --warn-soft: #FBF0DA;
+  --block: #B4441A;
+  --block-soft: #FBE6DC;
+  --frame-a: #2C302F;
+  --frame-b: #5D6361;
+  --font-display: "Bricolage Grotesque", "Hanken Grotesk", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-ios: -apple-system, "SF Pro Text", "SF Pro Display", system-ui, "Helvetica Neue", Arial, sans-serif;
+  /* App (siempre clara, como la spec: estilo claro tipo iOS) */
+  --a-accent: #0B7A6B;
+  --a-accent-ink: #FFFFFF;
+  --a-accent-soft: #E2F2EE;
+  --a-ink: #0F1715;
+  --a-muted: #6A7673;
+  --a-bg: #FFFFFF;
+  --a-fill: #F1F4F3;
+  --a-line: #E4E9E7;
+  --a-map: #EAEFEC;
+  --a-street: #FFFFFF;
+  --a-avenue: #FBF3DA;
+  --a-park: #D5EBD2;
+  --a-river: #C9E0EA;
+  --a-warn: #B7791F;
+  --a-shadow: rgba(15, 23, 21, .14);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1514; --surface: #16201E; --ink: #E6EEEC; --muted: #98A8A5; --line: #2A3735;
+    --accent: #3FBFA9; --accent-soft: #143430; --ok: #5BC98A; --ok-soft: #13301F;
+    --warn: #E3B05A; --warn-soft: #33270F; --block: #F08A5D; --block-soft: #3A1E12;
+    --frame-a: #3A3F3E; --frame-b: #707775;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1514; --surface: #16201E; --ink: #E6EEEC; --muted: #98A8A5; --line: #2A3735;
+  --accent: #3FBFA9; --accent-soft: #143430; --ok: #5BC98A; --ok-soft: #13301F;
+  --warn: #E3B05A; --warn-soft: #33270F; --block: #F08A5D; --block-soft: #3A1E12;
+  --frame-a: #3A3F3E; --frame-b: #707775;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stage { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 48px; align-items: start; }
+.phone-col { position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+@media (max-width: 960px) {
+  .stage { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .phone-col { position: static; }
+}
+
+/* ---------- Marco del teléfono ---------- */
+.phone-fit { position: relative; }
+.phone {
+  position: absolute; top: 0; left: 0; transform-origin: 0 0;
+  width: 468px; height: 984px; border-radius: 76px; padding: 14px;
+  background: linear-gradient(145deg, var(--frame-b), var(--frame-a) 28%, var(--frame-a) 72%, var(--frame-b));
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,.55) inset, 0 40px 80px -30px rgba(10,30,26,.45), 0 12px 24px -12px rgba(10,30,26,.3);
+}
+.phone::before, .phone::after { content: ""; position: absolute; width: 4px; border-radius: 2px; background: var(--frame-a); left: -3px; }
+.phone::before { top: 190px; height: 64px; }
+.phone::after { top: 270px; height: 64px; }
+.side-btn { position: absolute; right: -3px; top: 240px; width: 4px; height: 100px; border-radius: 2px; background: var(--frame-a); }
+.screen {
+  position: relative; width: 440px; height: 956px; border-radius: 62px; overflow: hidden;
+  background: var(--a-bg); color: var(--a-ink); font-family: var(--font-ios); font-size: 16px; line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+}
+.island { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 124px; height: 36px; border-radius: 20px; background: #000; z-index: 60; }
+.statusbar { position: absolute; top: 0; left: 0; right: 0; height: 58px; display: flex; justify-content: space-between; align-items: center; padding: 6px 34px 0 46px; font-weight: 600; font-size: 17px; z-index: 50; pointer-events: none; color: var(--a-ink); background: linear-gradient(rgba(255,255,255,.92) 55%, rgba(255,255,255,0)); }
+.statusbar .icons { display: flex; gap: 6px; align-items: center; }
+.home-ind { position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); width: 150px; height: 5px; border-radius: 3px; background: var(--a-ink); z-index: 60; opacity: .9; }
+.view { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.scroll { flex: 1; overflow-y: auto; scrollbar-width: none; }
+.scroll::-webkit-scrollbar { display: none; }
+
+/* Tab bar */
+.tabbar { display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 10px 30px; border-top: 1px solid var(--a-line); background: rgba(255,255,255,.96); }
+.tab { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--a-muted); padding: 4px 0; min-height: 48px; cursor: pointer; }
+.tab svg { width: 26px; height: 26px; }
+.tab.on { color: var(--a-accent); }
+
+/* Mapa */
+.map { position: relative; background: var(--a-map); overflow: hidden; }
+.map svg.base { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.fab { position: absolute; width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--a-bg); box-shadow: 0 4px 14px var(--a-shadow); display: grid; place-items: center; cursor: pointer; color: var(--a-ink); }
+.back { position: absolute; top: 62px; left: 18px; z-index: 5; }
+
+/* Hoja inferior */
+.sheet { position: relative; background: var(--a-bg); border-radius: 28px 28px 0 0; margin-top: -28px; box-shadow: 0 -8px 24px rgba(15,23,21,.08); padding: 10px 20px 16px; z-index: 3; }
+.grab { width: 40px; height: 5px; border-radius: 3px; background: var(--a-line); margin: 0 auto 14px; }
+.h1 { font-size: 28px; font-weight: 700; letter-spacing: -.02em; margin: 0; }
+.h2 { font-size: 21px; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+.sub { color: var(--a-muted); font-size: 15px; margin: 2px 0 0; }
+.search {
+  width: 100%; display: flex; align-items: center; gap: 12px; border: 0; background: var(--a-fill); border-radius: 16px; padding: 16px 16px;
+  font-size: 18px; font-weight: 600; color: var(--a-ink); cursor: pointer; text-align: left; margin-top: 14px;
+}
+.search .when { margin-left: auto; font-size: 13px; font-weight: 600; background: var(--a-bg); border-radius: 999px; padding: 6px 10px; display: flex; gap: 5px; align-items: center; }
+.quick { display: flex; gap: 10px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; }
+.quick button { flex: none; border: 1px solid var(--a-line); background: var(--a-bg); border-radius: 999px; padding: 9px 14px; font-size: 14px; font-weight: 500; display: flex; gap: 7px; align-items: center; cursor: pointer; }
+.sec-title { display: flex; justify-content: space-between; align-items: baseline; margin: 22px 0 10px; }
+.sec-title b { font-size: 17px; }
+.sec-title span { font-size: 13px; color: var(--a-muted); }
+
+/* Tarjeta de viaje */
+.trip { width: 100%; text-align: left; border: 1px solid var(--a-line); background: var(--a-bg); border-radius: 18px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; cursor: pointer; margin-bottom: 10px; }
+.trip.sel { border-color: var(--a-accent); box-shadow: 0 0 0 1.5px var(--a-accent) inset; background: #FAFDFC; }
+.trip .route { font-weight: 650; font-size: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.trip .meta { grid-column: 1; font-size: 13px; color: var(--a-muted); display: flex; gap: 10px; flex-wrap: wrap; }
+.trip .price { grid-row: 1 / span 2; grid-column: 2; text-align: right; }
+.trip .price b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.trip .price small { font-size: 12px; color: var(--a-muted); }
+.drop { grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--a-accent); background: var(--a-accent-soft); border-radius: 10px; padding: 6px 10px; display: flex; gap: 6px; align-items: center; }
+.drop.full { color: var(--a-muted); background: var(--a-fill); }
+.pill { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 8px; background: var(--a-fill); color: var(--a-muted); white-space: nowrap; }
+.pill.ok { background: var(--a-accent-soft); color: var(--a-accent); }
+.pill.wait { background: #FBF0DA; color: var(--a-warn); }
+
+/* Botones */
+.cta { width: 100%; border: 0; border-radius: 16px; background: var(--a-accent); color: var(--a-accent-ink); font-size: 18px; font-weight: 650; padding: 17px; cursor: pointer; display: flex; justify-content: center; gap: 8px; align-items: center; min-height: 56px; }
+.cta[disabled] { opacity: .45; cursor: default; }
+.cta.ghost { background: var(--a-fill); color: var(--a-ink); }
+.footer { padding: 12px 20px 34px; background: var(--a-bg); border-top: 1px solid var(--a-line); display: grid; gap: 10px; }
+
+/* Lista genérica */
+.row { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--a-line); width: 100%; background: none; border-left: 0; border-right: 0; border-top: 0; text-align: left; cursor: pointer; font-size: 16px; }
+.row:last-child { border-bottom: 0; }
+.ico { width: 40px; height: 40px; border-radius: 12px; background: var(--a-fill); display: grid; place-items: center; flex: none; color: var(--a-ink); }
+.ico.acc { background: var(--a-accent-soft); color: var(--a-accent); }
+.row .t { flex: 1; min-width: 0; }
+.row .t small { display: block; color: var(--a-muted); font-size: 13px; }
+
+/* Conductor */
+.driver { display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 18px; background: var(--a-fill); }
+.avatar { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 18px; color: #fff; flex: none; }
+.plate { font-family: var(--font-mono); font-size: 13px; font-weight: 600; border: 1.5px solid var(--a-ink); border-radius: 6px; padding: 2px 7px; background: var(--a-bg); letter-spacing: .06em; }
+
+/* Escala de precios */
+.scale { display: grid; gap: 7px; margin-top: 10px; }
+.scale .bar { display: grid; grid-template-columns: 92px 1fr 70px; white-space: nowrap; align-items: center; gap: 10px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.scale .bar i { display: block; height: 10px; border-radius: 5px; background: var(--a-line); }
+.scale .bar.now i { background: var(--a-accent); }
+.scale .bar.now { font-weight: 700; }
+.scale .bar b { text-align: right; font-weight: 600; }
+
+/* Paraderos */
+.stops { position: relative; margin-top: 8px; }
+.stop { display: flex; gap: 14px; align-items: flex-start; width: 100%; background: none; border: 0; text-align: left; padding: 8px 0; cursor: pointer; font-size: 15px; position: relative; }
+.stop .dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--a-muted); background: var(--a-bg); flex: none; margin-top: 2px; position: relative; z-index: 1; }
+.stop.mine .dot { border-color: var(--a-accent); background: var(--a-accent); box-shadow: 0 0 0 4px var(--a-accent-soft); }
+.stop.done .dot { border-color: var(--a-accent); }
+.stops::before { content: ""; position: absolute; left: 8px; top: 20px; bottom: 20px; width: 2px; background: var(--a-line); }
+.stop small { display: block; color: var(--a-muted); font-size: 13px; }
+.stop .tag { margin-left: auto; }
+
+/* Notificación push */
+.push { position: absolute; top: 54px; left: 12px; right: 12px; z-index: 70; background: rgba(250,251,250,.97); border-radius: 22px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; box-shadow: 0 10px 30px rgba(0,0,0,.18); transform: translateY(-140%); opacity: 0; transition: transform .45s cubic-bezier(.2,.9,.3,1.15), opacity .3s; font-size: 15px; }
+.push.show { transform: translateY(0); opacity: 1; }
+.push .appicon { width: 38px; height: 38px; border-radius: 10px; flex: none; }
+.push b { display: block; font-size: 15px; }
+.push small { color: var(--a-muted); font-size: 12px; margin-left: auto; }
+
+/* Formularios */
+.field { display: grid; gap: 6px; margin-bottom: 14px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--a-muted); }
+.field input, .field select { font: inherit; font-size: 16px; border: 1px solid var(--a-line); background: var(--a-fill); border-radius: 12px; padding: 13px 14px; color: var(--a-ink); width: 100%; min-height: 48px; }
+.field input:focus { outline: 2px solid var(--a-accent); outline-offset: 0; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--a-fill); border-radius: 12px; padding: 3px; }
+.seg button { border: 0; background: none; border-radius: 10px; padding: 10px; font-size: 15px; font-weight: 600; cursor: pointer; color: var(--a-muted); min-height: 44px; }
+.seg button.on { background: var(--a-bg); color: var(--a-ink); box-shadow: 0 1px 4px var(--a-shadow); }
+.stepper { display: flex; align-items: center; gap: 14px; }
+.stepper button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--a-line); background: var(--a-bg); font-size: 22px; cursor: pointer; }
+.stepper b { font-size: 20px; min-width: 24px; text-align: center; font-variant-numeric: tabular-nums; }
+.err { color: #B42318; font-size: 13px; }
+.toggle { width: 51px; height: 31px; border-radius: 16px; background: var(--a-accent); position: relative; flex: none; border: 0; cursor: pointer; }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 22px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: left .2s; }
+.toggle.off { background: #D9DEDC; }
+.toggle.off::after { left: 2px; }
+
+.card { border: 1px solid var(--a-line); border-radius: 18px; padding: 14px 16px; }
+.big-price { font-size: 44px; font-weight: 750; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--a-line); font-size: 15px; }
+.kv:last-child { border-bottom: 0; }
+.kv span { color: var(--a-muted); }
+.kv b { font-weight: 600; text-align: right; }
+.eta { position: absolute; left: 18px; right: 18px; top: 62px; background: var(--a-bg); border-radius: 18px; padding: 12px 16px; box-shadow: 0 6px 20px var(--a-shadow); display: flex; align-items: center; gap: 12px; z-index: 4; }
+.eta .min { font-size: 26px; font-weight: 750; color: var(--a-accent); font-variant-numeric: tabular-nums; }
+.example-tag { position: absolute; bottom: 36px; right: 12px; z-index: 6; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.9); color: var(--a-muted); border-radius: 8px; padding: 3px 7px; }
+
+@media (prefers-reduced-motion: reduce) { .push { transition: none; } .toggle::after { transition: none; } }
+
+/* ---------- Bajo el teléfono ---------- */
+.jump { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 470px; }
+.jump button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 11px; font-size: 13px; cursor: pointer; min-height: 34px; }
+.jump button.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.hint { font-size: 13px; color: var(--muted); text-align: center; max-width: 440px; margin: 0; }
+
+/* ---------- Panel de estado ---------- */
+.panel { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+.box { min-width: 0; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+.panel h1 { font-family: var(--font-display); font-size: clamp(30px, 4vw, 42px); line-height: 1.05; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.panel h2 { font-family: var(--font-display); font-size: 22px; letter-spacing: -.01em; margin: 0 0 12px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 62ch; margin: 10px 0 0; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
+.now-on { border-color: var(--accent); }
+.now-on h3 { margin: 0 0 4px; font-size: 18px; }
+.now-on p { margin: 0 0 10px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; border-radius: 8px; padding: 4px 9px; display: inline-flex; gap: 6px; align-items: center; }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.no { background: var(--block-soft); color: var(--block); }
+.chip.half { background: var(--warn-soft); color: var(--warn); }
+code, .mono { font-family: var(--font-mono); font-size: .86em; }
+
+.stepper-stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.stage-item { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.stage-item:last-child { border-bottom: 0; }
+.mark { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; border: 2px solid var(--line); color: var(--muted); }
+.stage-item.done .mark { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.stage-item.blocked .mark { border-color: var(--block); color: var(--block); }
+.stage-item b { display: block; }
+.stage-item p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.state { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.state.done { background: var(--ok-soft); color: var(--ok); }
+.state.blocked { background: var(--block-soft); color: var(--block); }
+.state.todo { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+
+.matrix-wrap { overflow-x: auto; }
+table.matrix { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+.matrix th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.matrix td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.matrix tr:last-child td { border-bottom: 0; }
+.matrix td:first-child { font-weight: 600; }
+.cell { display: flex; gap: 6px; align-items: flex-start; }
+.cell .d { width: 9px; height: 9px; border-radius: 50%; flex: none; margin-top: 6px; }
+.d.ok { background: var(--ok); } .d.no { background: var(--block); } .d.half { background: var(--warn); }
+.cell span { color: var(--muted); }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 10px; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 640px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.list li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; font-size: 14px; }
+.list li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-top: 7px; }
+.list.ok li::before { background: var(--ok); }
+.list.no li::before { background: var(--block); }
+.list.half li::before { background: var(--warn); }
+.list b { font-weight: 600; }
+.list span { color: var(--muted); }
+.blocked-box { border-color: var(--block); background: var(--block-soft); }
+.blocked-box h2 { color: var(--block); }
+.blocked-box p { margin: 0 0 8px; }
+.foot { font-size: 13px; color: var(--muted); }
+</style>
+
+<div class="stage">
+  <div class="phone-col">
+    <div class="phone-fit" id="phoneFit">
+      <div class="phone" id="phone">
+        <div class="side-btn"></div>
+        <div class="screen" id="screen">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="icons">
+              <svg width="19" height="12" viewBox="0 0 19 12" fill="currentColor"><rect x="0" y="8" width="3.4" height="4" rx="1"/><rect x="5" y="5.5" width="3.4" height="6.5" rx="1"/><rect x="10" y="3" width="3.4" height="9" rx="1"/><rect x="15" y="0" width="3.4" height="12" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2.3c2.3 0 4.4.9 6 2.4l1.2-1.2A10.2 10.2 0 0 0 8.5.6 10.2 10.2 0 0 0 1.3 3.5l1.2 1.2a8.5 8.5 0 0 1 6-2.4Zm0 3.4c1.4 0 2.6.5 3.6 1.4l1.2-1.2a6.8 6.8 0 0 0-9.6 0l1.2 1.2c1-.9 2.2-1.4 3.6-1.4Zm0 3.4c.5 0 1 .2 1.3.5L8.5 11 7.2 9.6c.3-.3.8-.5 1.3-.5Z"/></svg>
+              <svg width="28" height="13" viewBox="0 0 28 13"><rect x=".5" y=".5" width="24" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="19" height="9" rx="2" fill="currentColor"/><rect x="26" y="4.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".4"/></svg>
+            </span>
+          </div>
+          <div class="push" id="push" role="status" aria-live="polite"></div>
+          <div id="app"></div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+    </div>
+    <div class="jump" id="jump" aria-label="Ir a una pantalla"></div>
+    <p class="hint">Toca dentro del teléfono como si fuera la app. Los viajes, nombres y datos bancarios son de ejemplo.</p>
+  </div>
+
+  <main class="panel">
+    <header>
+      <p class="eyebrow">Comparte tu viaje · estado al 2 de noviembre de 2026</p>
+      <h1>Así se verá la app, y esto es lo que ya existe de verdad</h1>
+      <p class="lede">El teléfono muestra el flujo completo del MVP con un estilo de app de movilidad: mapa primero, hoja inferior, “¿A dónde vas?”, tarjetas de opciones, conductor con patente y seguimiento en vivo. La marca es propia (verde azulado #0B7A6B de la spec). Los precios del mockup se calculan con la misma lógica de <code>src/lib/precio.ts</code>.</p>
+    </header>
+
+    <section class="box now-on" id="nowOn" aria-live="polite"></section>
+
+    <section class="box blocked-box">
+      <h2>Lo que frena el avance hoy</h2>
+      <p>La construcción de la app está detenida desde el 30 de octubre esperando dos cosas tuyas, pedidas en el hilo “Construir MVP de Comparte tu viaje”:</p>
+      <ul class="list no">
+        <li><div><b>Elegir el stack.</b> <span>La recomendación es Expo (React Native) + Supabase, que permite probar en tu iPhone con Expo Go sin Mac. Alternativas: SwiftUI + Supabase (necesita Mac con Xcode) o Expo + Firebase.</span></div></li>
+        <li><div><b>Crear un repositorio vacío en GitHub</b> <span>(por ejemplo <code>comparte-tu-viaje</code>). Hoy el código vive solo en la carpeta compartida del proyecto, con un único commit local.</span></div></li>
+      </ul>
+    </section>
+
+    <section class="box">
+      <h2>Etapas del proyecto</h2>
+      <ol class="stepper-stages">
+        <li class="stage-item done"><span class="mark">✓</span><div><b>Especificación</b><p>Reglas de negocio, alcance del MVP, pantallas y decisiones abiertas en <code>AGENTS.md</code>.</p></div><span class="state done">Hecho</span></li>
+        <li class="stage-item done"><span class="mark">✓</span><div><b>Lógica de precio</b><p><code>precio.ts</code> con 8 pruebas. Vuelto a ejecutar hoy: 8 de 8 pasan.</p></div><span class="state done">Hecho</span></li>
+        <li class="stage-item done"><span class="mark">✓</span><div><b>Modelo de datos</b><p>Migración Postgres para Supabase con 9 tablas, cupos sin sobreventa y seguridad por filas. Probada hoy en Postgres 16: todas las pruebas pasan.</p></div><span class="state done">Hecho</span></li>
+        <li class="stage-item blocked"><span class="mark">!</span><div><b>Stack y repositorio</b><p>Esperando tu elección y el repositorio en GitHub.</p></div><span class="state blocked">Bloqueado</span></li>
+        <li class="stage-item"><span class="mark">5</span><div><b>Pantallas de la app</b><p>Las 6 pantallas de la spec. Hoy solo existen en este mockup; no hay código de app.</p></div><span class="state todo">Pendiente</span></li>
+        <li class="stage-item"><span class="mark">6</span><div><b>Backend en la nube, notificaciones y mapa</b><p>Crear el proyecto Supabase real (requiere cuenta y llaves), envío de push y ubicación en vivo.</p></div><span class="state todo">Pendiente</span></li>
+        <li class="stage-item"><span class="mark">7</span><div><b>Prueba en tu iPhone y lanzamiento</b><p>Expo Go para probar; TestFlight y App Store requieren una cuenta Apple Developer. Antes de lanzar, validar el modelo legal de reparto de gastos.</p></div><span class="state todo">Pendiente</span></li>
+      </ol>
+    </section>
+
+    <section class="box">
+      <h2>Funciones del MVP, capa por capa</h2>
+      <div class="matrix-wrap">
+        <table class="matrix">
+          <thead><tr><th>Función</th><th>Base de datos</th><th>Lógica</th><th>Pantalla en la app</th></tr></thead>
+          <tbody>
+            <tr><td>Publicar viaje</td>
+              <td><div class="cell"><i class="d ok"></i><div>Tablas <code>viajes</code>, <code>paraderos</code>, <code>cuentas_cobro</code>; máximo 8 cupos</div></div></td>
+              <td><div class="cell"><i class="d ok"></i><div><code>escalaDePrecios</code> para la vista previa</div></div></td>
+              <td><div class="cell"><i class="d no"></i><span>Solo mockup</span></div></td></tr>
+            <tr><td>Lista y detalle con precio dinámico</td>
+              <td><div class="cell"><i class="d ok"></i><div>Vista <code>viajes_con_precio</code></div></div></td>
+              <td><div class="cell"><i class="d ok"></i><div><code>precioPorPersona</code>, <code>precioConUnoMas</code>, <code>formatoCLP</code></div></div></td>
+              <td><div class="cell"><i class="d no"></i><span>Solo mockup</span></div></td></tr>
+            <tr><td>Inscripción</td>
+              <td><div class="cell"><i class="d ok"></i><div><code>inscribirse()</code> bloquea el viaje y revisa cupos</div></div></td>
+              <td><div class="cell"><i class="d ok"></i><div>En la base</div></div></td>
+              <td><div class="cell"><i class="d no"></i><span>Solo mockup</span></div></td></tr>
+            <tr><td>Notificaciones push</td>
+              <td><div class="cell"><i class="d ok"></i><div><code>cola_notificaciones</code> y <code>encolar_recordatorios()</code></div></div></td>
+              <td><div class="cell"><i class="d no"></i><div>Falta el envío real (Expo/APNs) y programar pg_cron</div></div></td>
+              <td><div class="cell"><i class="d no"></i><span>Solo mockup</span></div></td></tr>
+            <tr><td>Viaje en curso con mapa</td>
+              <td><div class="cell"><i class="d ok"></i><div><code>ubicaciones_conductor</code></div></div></td>
+              <td><div class="cell"><i class="d half"></i><div>“Conductor llegando” sin implementar; distancia propuesta 1 km o 3 min</div></div></td>
+              <td><div class="cell"><i class="d no"></i><span>Solo mockup</span></div></td></tr>
+            <tr><td>Pago por transferencia</td>
+              <td><div class="cell"><i class="d ok"></i><div><code>pagos</code>: pendiente, informado, confirmado</div></div></td>
+              <td><div class="cell"><i class="d half"></i><div>Momento del cobro sin confirmar</div></div></td>
+              <td><div class="cell"><i class="d no"></i><span>Solo mockup</span></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="legend"><span><i class="d ok cell" style="display:inline-block;width:9px;height:9px;border-radius:50%"></i>Hecho y probado</span><span><i class="d half" style="display:inline-block;width:9px;height:9px;border-radius:50%"></i>Parcial o por decidir</span><span><i class="d no" style="display:inline-block;width:9px;height:9px;border-radius:50%"></i>No existe aún</span></div>
+    </section>
+
+    <div class="cols">
+      <section class="box">
+        <h2>Supuestos que debes confirmar</h2>
+        <ul class="list half">
+          <li><div><b>Redondeo hacia abajo.</b> <span>$10.000 entre 3 da $3.333 cada uno; el conductor recibe $9.999 y nunca más que el costo real.</span></div></li>
+          <li><div><b>Máximo 8 cupos</b> <span>por viaje.</span></div></li>
+          <li><div><b>Cobro al terminar el viaje,</b> <span>como muestra el mockup. La alternativa es cobrar al inscribirse y devolver la diferencia.</span></div></li>
+          <li><div><b>El conductor marca el viaje como confirmado;</b> <span>parte en “esperando pasajeros”.</span></div></li>
+        </ul>
+      </section>
+      <section class="box">
+        <h2>Decisiones abiertas de la spec</h2>
+        <ul class="list">
+          <li><div><b>Cancelación del conductor:</b> <span>aviso inmediato y efecto en su reputación.</span></div></li>
+          <li><div><b>Pasajero que no llega:</b> <span>espera máxima y penalización.</span></div></li>
+          <li><div><b>Legal en Chile:</b> <span>reparto de gastos con tope al costo real; validar con asesoría antes de lanzar.</span></div></li>
+          <li><div><b>Seguridad:</b> <span>verificación de identidad y patente.</span></div></li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="box">
+      <h2>Qué tomamos del estilo de las apps de movilidad, y qué cambia</h2>
+      <div class="cols">
+        <ul class="list ok">
+          <li><div><b>Mapa a pantalla completa</b> <span>con una hoja inferior que sube.</span></div></li>
+          <li><div><b>Búsqueda “¿A dónde vas?”</b> <span>como entrada principal, con atajos a destinos frecuentes.</span></div></li>
+          <li><div><b>Opciones en tarjetas seleccionables</b> <span>con precio grande a la derecha.</span></div></li>
+          <li><div><b>Conductor con foto, auto y patente;</b> <span>seguimiento con tiempo de llegada.</span></div></li>
+        </ul>
+        <ul class="list">
+          <li><div><b>No se pide un auto al momento.</b> <span>El conductor publica un viaje que ya iba a hacer, 1 o 2 días antes, y los pasajeros se suman.</span></div></li>
+          <li><div><b>El precio baja</b> <span>con cada persona que se inscribe, y la app avisa.</span></div></li>
+          <li><div><b>Paraderos fijos</b> <span>(metro o puntos) en vez de recogida puerta a puerta.</span></div></li>
+          <li><div><b>Pago directo por transferencia</b> <span>al conductor; la plataforma no toca el dinero.</span></div></li>
+        </ul>
+      </div>
+    </section>
+
+    <p class="foot">Fuentes revisadas: <code>README.md</code>, <code>AGENTS.md</code>, <code>docs/modelo-de-datos.md</code>, <code>src/lib/precio.ts</code>, <code>supabase/migrations/0001_modelo_inicial.sql</code> y el hilo del MVP. La carpeta <code>docs/diseno/</code> estaba vacía; este archivo queda ahí como mockup de referencia.</p>
+  </main>
+</div>
+
+<script>
+// Lógica de precio: copia fiel de src/lib/precio.ts (sin tipos).
+function precioPorPersona(costoTotal, inscritos) {
+  if (!Number.isInteger(costoTotal) || costoTotal < 0) throw new Error('costoTotal inválido');
+  if (!Number.isInteger(inscritos) || inscritos < 0) throw new Error('inscritos inválido');
+  if (costoTotal === 0) return 0;
+  return Math.floor(costoTotal / Math.max(inscritos, 1));
+}
+function precioConUnoMas(costoTotal, inscritos, cupos) {
+  if (costoTotal === 0 || inscritos + 1 > cupos) return null;
+  return precioPorPersona(costoTotal, inscritos + 1);
+}
+function escalaDePrecios(costoTotal, cupos) {
+  if (!Number.isInteger(cupos) || cupos < 1) throw new Error('cupos inválido');
+  return Array.from({ length: cupos }, (_, i) => ({ pasajeros: i + 1, precio: precioPorPersona(costoTotal, i + 1) }));
+}
+function formatoCLP(monto, gratisComoTexto = true) {
+  if (monto === 0 && gratisComoTexto) return 'Gratis';
+  const signo = monto < 0 ? '-' : '';
+  const miles = Math.abs(Math.round(monto)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${signo}$${miles}`;
+}
+
+// ---------- Datos de ejemplo ----------
+const RUTAS = {
+  maipu:   [[48, 560], [110, 470], [150, 400], [205, 330], [262, 262], [318, 196], [392, 120]],
+  florida: [[400, 560], [352, 488], [300, 430], [262, 372], [220, 300], [168, 236]],
+  nunoa:   [[90, 250], [160, 236], [236, 210], [300, 176], [380, 150]],
+};
+const estado = {
+  pantalla: 'inicio',
+  viajeSel: 'v1',
+  paraderoSel: 'p2',
+  inscrito: false,
+  pago: 'pendiente',
+  rolMisViajes: 'pasajero',
+  avisos: { baja: true, recordatorio: true, llegando: true },
+  progreso: 0,
+  form: { origen: 'Metro Ñuble', destino: 'Campus Lo Contador', hora: 'Mañana 07:45', tipo: 'pagado', costo: '8000', cupos: 4 },
+  viajes: [
+    { id: 'v1', conductor: 'Camila R.', inicial: 'CR', color: '#7A5AF5', auto: 'Toyota Yaris gris', patente: 'RTKP·42', nota: '4,9',
+      origen: 'Maipú', destino: 'Metro Los Leones', sale: 'Mañana · 07:30', llegada: '08:20', costo: 10000, cupos: 4, inscritos: 2, estado: 'esperando_pasajeros', ruta: 'maipu',
+      paraderos: [{ id: 'p1', nombre: 'Metro Plaza de Maipú', tipo: 'metro', hora: '07:30', i: 0 }, { id: 'p2', nombre: 'Metro Las Rejas', tipo: 'metro', hora: '07:52', i: 3 }, { id: 'p3', nombre: 'Metro Los Leones', tipo: 'metro', hora: '08:20', i: 6 }] },
+    { id: 'v2', conductor: 'Diego M.', inicial: 'DM', color: '#E0673A', auto: 'Kia Morning blanco', patente: 'LBXW·17', nota: '4,8',
+      origen: 'La Florida', destino: 'Campus San Joaquín', sale: 'Mañana · 08:00', llegada: '08:35', costo: 6000, cupos: 3, inscritos: 1, estado: 'esperando_pasajeros', ruta: 'florida',
+      paraderos: [{ id: 'q1', nombre: 'Metro Bellavista de La Florida', tipo: 'metro', hora: '08:00', i: 0 }, { id: 'q2', nombre: 'Metro Mirador', tipo: 'metro', hora: '08:12', i: 2 }, { id: 'q3', nombre: 'Campus San Joaquín', tipo: 'punto_fijo', hora: '08:35', i: 5 }] },
+    { id: 'v3', conductor: 'Valentina S.', inicial: 'VS', color: '#2E86C1', auto: 'Suzuki Swift azul', patente: 'PZHD·08', nota: '5,0',
+      origen: 'Ñuñoa', destino: 'Las Condes', sale: 'Mañana · 08:15', llegada: '08:45', costo: 0, cupos: 3, inscritos: 1, estado: 'confirmado', ruta: 'nunoa',
+      paraderos: [{ id: 'r1', nombre: 'Plaza Ñuñoa', tipo: 'punto_fijo', hora: '08:15', i: 0 }, { id: 'r2', nombre: 'Metro Tobalaba', tipo: 'metro', hora: '08:32', i: 3 }, { id: 'r3', nombre: 'Metro Escuela Militar', tipo: 'metro', hora: '08:45', i: 4 }] },
+  ],
+};
+const viaje = () => estado.viajes.find((v) => v.id === estado.viajeSel);
+const paradero = (v = viaje()) => v.paraderos.find((p) => p.id === estado.paraderoSel) || v.paraderos[0];
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- Iconos ----------
+const I = {
+  back: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  pin: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>',
+  dot: '<svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="3"/></svg>',
+  search: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  clock: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  seat: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 21a8 8 0 0 1 16 0Z"/></svg>',
+  down: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
+  metro: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M8 21l2-4M16 21l-2-4"/><circle cx="9" cy="14" r=".6" fill="currentColor"/><circle cx="15" cy="14" r=".6" fill="currentColor"/></svg>',
+  home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4Z"/><path d="M10 20v-6h4v6"/></svg>',
+  bag: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  cap: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5Z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>',
+  check: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  bell: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4Z"/><path d="M10 21h4"/></svg>',
+  share: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v7h14v-7"/></svg>',
+  copy: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
+  bank: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 9l9-5 9 5Z"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/></svg>',
+  shield: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6Z"/></svg>',
+  users: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>',
+  star: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17.4l-6.1 3.5 1.5-6.8-5.2-4.6 6.9-.7Z"/></svg>',
+  chev: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".45"><path d="M9 5l7 7-7 7"/></svg>',
+  tabTrips: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5Z"/><path d="M9 4v13.5M15 6.5V20"/></svg>',
+  tabPub: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+  tabMine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M8 2.5v3M16 2.5v3M4 9.5h16M8 14h4"/></svg>',
+  tabProfile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+};
+const LOGO = '<svg class="appicon" viewBox="0 0 38 38"><rect width="38" height="38" rx="10" fill="#0B7A6B"/><path d="M9 25c4-9 16-9 20 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="13" cy="15" r="3" fill="#fff"/><circle cx="19" cy="12" r="3" fill="#fff"/><circle cx="25" cy="15" r="3" fill="#fff"/></svg>';
+
+// ---------- Mapa (ilustrativo, no es un mapa real) ----------
+function mapaSVG({ ruta = null, paraderos = [], miParadero = null, auto = false, pines = [] } = {}) {
+  let calles = '';
+  for (let i = -2; i < 18; i++) calles += `<path d="M-40 ${i * 46} L480 ${i * 46 - 70}" stroke="var(--a-street)" stroke-width="${i % 4 === 0 ? 9 : 4}" />`;
+  for (let i = -2; i < 14; i++) calles += `<path d="M${i * 44} -20 L${i * 44 + 60} 640" stroke="var(--a-street)" stroke-width="${i % 5 === 0 ? 9 : 4}" />`;
+  const avenidas = `<path d="M-20 420 C120 380 260 300 470 180" stroke="var(--a-avenue)" stroke-width="12" fill="none"/><path d="M60 -10 C100 200 180 380 230 640" stroke="var(--a-avenue)" stroke-width="12" fill="none"/>`;
+  const parques = `<rect x="250" y="360" width="110" height="70" rx="14" fill="var(--a-park)" transform="rotate(-8 300 400)"/><rect x="30" y="120" width="80" height="60" rx="12" fill="var(--a-park)"/><circle cx="380" cy="470" r="38" fill="var(--a-park)"/>`;
+  const rio = `<path d="M-20 300 C80 280 120 230 200 236 S330 200 470 96" stroke="var(--a-river)" stroke-width="16" fill="none" stroke-linecap="round"/>`;
+  let capaRuta = '';
+  if (ruta) {
+    const pts = RUTAS[ruta];
+    const d = 'M' + pts.map((p) => p.join(' ')).join(' L');
+    capaRuta = `<path d="${d}" stroke="#0F1715" stroke-opacity=".18" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path id="rutaPath" d="${d}" stroke="var(--a-accent)" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    capaRuta += paraderos.map((p) => {
+      const [x, y] = pts[p.i];
+      const mio = p.id === miParadero;
+      return `<g><circle cx="${x}" cy="${y}" r="${mio ? 11 : 8}" fill="${mio ? 'var(--a-accent)' : '#fff'}" stroke="${mio ? '#fff' : 'var(--a-accent)'}" stroke-width="4"/>${p.tipo === 'metro' ? `<text x="${x}" y="${y + 4}" font-size="10" font-weight="800" text-anchor="middle" fill="${mio ? '#fff' : 'var(--a-accent)'}" font-family="system-ui">M</text>` : ''}</g>`;
+    }).join('');
+    if (auto) capaRuta += `<g id="auto"><circle r="17" fill="#fff" stroke="var(--a-accent)" stroke-width="2"/><path d="M-8 3v-4l3-5h10l3 5v4Zm2 0v2m12-2v2" fill="var(--a-accent)" stroke="var(--a-accent)" stroke-width="2" stroke-linejoin="round"/></g>`;
+  }
+  const capaPines = pines.map(([x, y, t]) => `<g><circle cx="${x}" cy="${y}" r="20" fill="var(--a-accent)" opacity=".14"/><circle cx="${x}" cy="${y}" r="8" fill="var(--a-accent)" stroke="#fff" stroke-width="3"/>${t ? `<g transform="translate(${x + 14} ${y - 30})"><rect width="${t.length * 7.4 + 18}" height="26" rx="13" fill="#fff"/><text x="9" y="17" font-size="13" font-weight="700" fill="#0F1715" font-family="system-ui">${t}</text></g>` : ''}</g>`).join('');
+  return `<svg class="base" viewBox="0 0 440 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="440" height="600" fill="var(--a-map)"/>${parques}${rio}<g fill="none">${calles}</g>${avenidas}${capaRuta}${capaPines}</svg>`;
+}
+
+// ---------- Componentes ----------
+function tarjetaViaje(v, sel = false) {
+  const precio = precioPorPersona(v.costo, v.inscritos);
+  const unoMas = precioConUnoMas(v.costo, v.inscritos, v.cupos);
+  const libres = v.cupos - v.inscritos;
+  let baja;
+  if (v.costo === 0) baja = `<div class="drop full">Viaje gratis · solo inscríbete</div>`;
+  else if (unoMas === null) baja = `<div class="drop full">Sin cupos libres</div>`;
+  else baja = `<div class="drop">${I.down} Baja a ${formatoCLP(unoMas)} con 1 más</div>`;
+  return `<button class="trip${sel ? ' sel' : ''}" data-act="abrir" data-id="${v.id}">
+    <div class="route">${esc(v.origen)} <span style="color:var(--a-muted)">→</span> ${esc(v.destino)}</div>
+    <div class="price"><b>${formatoCLP(precio)}</b><small>${v.costo ? 'por persona hoy' : '&nbsp;'}</small></div>
+    <div class="meta"><span>${I.clock} ${esc(v.sale)}</span><span>${I.seat} ${libres} de ${v.cupos} cupos libres</span><span>${esc(v.conductor)}</span></div>
+    ${baja}
+  </button>`;
+}
+const atras = (to) => `<button class="fab back" data-go="${to}" aria-label="Volver">${I.back}</button>`;
+function tabbar(activa) {
+  const t = [['inicio', 'Viajes', I.tabTrips], ['publicar', 'Publicar', I.tabPub], ['misviajes', 'Mis viajes', I.tabMine], ['perfil', 'Perfil', I.tabProfile]];
+  return `<nav class="tabbar">${t.map(([id, l, ic]) => `<button class="tab${activa === id ? ' on' : ''}" data-go="${id}">${ic}${l}</button>`).join('')}</nav>`;
+}
+
+// ---------- Pantallas ----------
+const P = {};
+P.inicio = () => `
+  <div class="map" style="height:430px">${mapaSVG({ pines: [[214, 300, 'Estás aquí']] })}<span class="example-tag">Mapa ilustrativo</span></div>
+  <div class="sheet scroll" style="flex:1">
+    <div class="grab"></div>
+    <p class="h1">Hola, Claudio</p>
+    <p class="sub">Viajes que tu comunidad ya va a hacer</p>
+    <button class="search" data-go="buscar">${I.search}<span>¿A dónde vas?</span><span class="when">${I.clock} Mañana</span></button>
+    <div class="quick">
+      <button data-act="destino" data-id="v1">${I.metro} Metro Los Leones</button>
+      <button data-act="destino" data-id="v2">${I.cap} Campus San Joaquín</button>
+      <button data-act="destino" data-id="v3">${I.bag} Las Condes</button>
+    </div>
+    <div class="sec-title"><b>Saliendo mañana cerca de ti</b><span>${estado.viajes.length} viajes</span></div>
+    ${estado.viajes.map((v) => tarjetaViaje(v)).join('')}
+  </div>
+  ${tabbar('inicio')}`;
+
+P.buscar = () => `
+  <div style="padding:66px 20px 0">
+    <div style="display:flex;align-items:center;gap:10px"><button class="fab" style="position:static;box-shadow:none;background:var(--a-fill)" data-go="inicio" aria-label="Volver">${I.back}</button><p class="h2">Planifica tu viaje</p></div>
+    <div class="card" style="margin-top:16px;padding:6px 14px">
+      <div class="row" style="cursor:default"><span style="color:var(--a-accent)">${I.dot}</span><div class="t"><small>Desde</small>Tu ubicación · Maipú</div></div>
+      <div class="row" style="cursor:default"><span>${I.pin}</span><div class="t"><small>Hasta</small><b>¿A dónde vas?</b></div></div>
+    </div>
+    <div class="seg" style="margin-top:12px"><button>Hoy</button><button class="on">Mañana</button><button>Pasado mañana</button></div>
+  </div>
+  <div class="scroll" style="padding:8px 20px">
+    <div class="sec-title"><b>Destinos con viajes publicados</b></div>
+    ${estado.viajes.map((v) => `<button class="row" data-act="destino" data-id="${v.id}"><span class="ico">${v.paraderos[v.paraderos.length - 1].tipo === 'metro' ? I.metro : I.pin}</span><div class="t">${esc(v.destino)}<small>Desde ${esc(v.origen)} · ${esc(v.sale)}</small></div>${I.chev}</button>`).join('')}
+    <div class="sec-title"><b>Guardados</b></div>
+    <button class="row"><span class="ico">${I.home}</span><div class="t">Casa<small>Maipú</small></div>${I.chev}</button>
+    <button class="row"><span class="ico">${I.bag}</span><div class="t">Trabajo<small>Providencia</small></div>${I.chev}</button>
+  </div>`;
+
+P.opciones = () => {
+  const sel = viaje();
+  const lista = [sel, ...estado.viajes.filter((v) => v.id !== sel.id)];
+  return `
+  <div class="map" style="height:360px">${mapaSVG({ ruta: sel.ruta, paraderos: sel.paraderos })}${atras('buscar')}<span class="example-tag">Mapa ilustrativo</span></div>
+  <div class="sheet scroll" style="flex:1">
+    <div class="grab"></div>
+    <p class="h2">Elige tu viaje</p>
+    <p class="sub">Mañana · el precio baja con cada persona que se suma</p>
+    <div style="margin-top:14px">${lista.map((v) => tarjetaViaje(v, v.id === sel.id).replace('data-act="abrir"', 'data-act="elegir"')).join('')}</div>
+  </div>
+  <div class="footer"><button class="cta" data-go="detalle">Ver viaje con ${esc(sel.conductor.split(' ')[0])}</button></div>`;
+};
+
+P.detalle = () => {
+  const v = viaje();
+  const precio = precioPorPersona(v.costo, Math.max(v.inscritos, 1));
+  const conmigo = estado.inscrito ? v.inscritos : v.inscritos + 1;
+  const precioConmigo = precioPorPersona(v.costo, Math.min(conmigo, v.cupos));
+  const escala = escalaDePrecios(v.costo, v.cupos);
+  const max = escala[0].precio || 1;
+  const lleno = !estado.inscrito && v.inscritos >= v.cupos;
+  return `
+  <div class="map" style="height:300px">${mapaSVG({ ruta: v.ruta, paraderos: v.paraderos, miParadero: estado.paraderoSel })}${atras('opciones')}<span class="example-tag">Mapa ilustrativo</span></div>
+  <div class="sheet scroll" style="flex:1">
+    <div class="grab"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+      <div><p class="h2">${esc(v.origen)} → ${esc(v.destino)}</p><p class="sub">${esc(v.sale)} · llega ${v.llegada}</p></div>
+      <span class="pill ${v.estado === 'confirmado' ? 'ok' : 'wait'}">${v.estado === 'confirmado' ? 'Confirmado' : 'Esperando pasajeros'}</span>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div><small style="color:var(--a-muted)">Precio hoy por persona</small><div class="big-price">${formatoCLP(precio)}</div></div>
+        <div style="text-align:right;font-size:14px;color:var(--a-muted)">${v.inscritos} de ${v.cupos} inscritos<br>Costo total ${formatoCLP(v.costo, false)}</div>
+      </div>
+      ${v.costo ? `<div class="scale">${escala.map((e) => `<div class="bar${e.pasajeros === Math.max(v.inscritos, 1) ? ' now' : ''}"><span>${e.pasajeros} ${e.pasajeros === 1 ? 'persona' : 'personas'}</span><i style="width:${Math.max(8, (e.precio / max) * 100)}%"></i><b>${formatoCLP(e.precio)}</b></div>`).join('')}</div>` : '<p class="sub" style="margin-top:8px">Viaje gratis. El conductor no cobra.</p>'}
+    </div>
+    <div class="sec-title"><b>Elige tu paradero</b><span>El conductor los definió</span></div>
+    <div class="stops">${v.paraderos.map((p) => `<button class="stop${p.id === estado.paraderoSel ? ' mine' : ''}" data-act="paradero" data-id="${p.id}"><span class="dot"></span><div>${esc(p.nombre)}<small>${p.tipo === 'metro' ? 'Estación de metro' : 'Punto fijo'} · ${p.hora}</small></div>${p.id === estado.paraderoSel ? '<span class="pill ok tag">Tu paradero</span>' : ''}</button>`).join('')}</div>
+    <div class="sec-title"><b>Conductor</b></div>
+    <div class="driver"><span class="avatar" style="background:${v.color}">${v.inicial}</span><div style="flex:1"><b>${esc(v.conductor)}</b><div style="font-size:14px;color:var(--a-muted)">${esc(v.auto)}</div></div><span class="plate">${v.patente}</span></div>
+    <div style="height:12px"></div>
+  </div>
+  <div class="footer">
+    ${estado.inscrito && estado.viajeSel === v.id
+      ? `<button class="cta ghost" data-go="confirmado">${I.check} Ya estás inscrito</button>`
+      : `<button class="cta" data-act="inscribir" ${lleno ? 'disabled' : ''}>${lleno ? 'Sin cupos' : `Inscribirme · pagarías ${formatoCLP(precioConmigo)}`}</button>`}
+  </div>`;
+};
+
+P.confirmado = () => {
+  const v = viaje();
+  const precio = precioPorPersona(v.costo, v.inscritos);
+  const unoMas = precioConUnoMas(v.costo, v.inscritos, v.cupos);
+  return `
+  <div class="scroll" style="padding:80px 22px 20px">
+    <div style="width:72px;height:72px;border-radius:50%;background:var(--a-accent);color:#fff;display:grid;place-items:center;margin-bottom:18px">${I.check.replace('width="22" height="22"', 'width="36" height="36"')}</div>
+    <p class="h1">Quedaste inscrito</p>
+    <p class="sub">${esc(v.origen)} → ${esc(v.destino)} · ${esc(v.sale)}</p>
+    <div class="card" style="margin-top:20px">
+      <div class="kv"><span>Hoy pagas</span><b style="font-size:20px">${formatoCLP(precio)}</b></div>
+      <div class="kv"><span>Si se suma 1 más</span><b style="color:var(--a-accent)">${unoMas === null ? 'Cupos llenos' : formatoCLP(unoMas)}</b></div>
+      <div class="kv"><span>Inscritos</span><b>${v.inscritos} de ${v.cupos}</b></div>
+      <div class="kv"><span>Tu paradero</span><b>${esc(paradero().nombre)} · ${paradero().hora}</b></div>
+    </div>
+    <div class="sec-title"><b>Te avisaremos</b></div>
+    <div class="row" style="cursor:default"><span class="ico acc">${I.down}</span><div class="t">Cuando baje el precio<small>Cada vez que alguien se inscriba</small></div></div>
+    <div class="row" style="cursor:default"><span class="ico acc">${I.bell}</span><div class="t">30 minutos antes de salir<small>Si el viaje está confirmado</small></div></div>
+    <div class="row" style="cursor:default"><span class="ico acc">${I.pin}</span><div class="t">Cuando ${esc(v.conductor.split(' ')[0])} se acerque<small>A ${esc(paradero().nombre)}</small></div></div>
+  </div>
+  <div class="footer">
+    ${unoMas !== null ? `<button class="cta ghost" data-act="sumar">Simular: se inscribe otra persona</button>` : ''}
+    <button class="cta" data-act="iniciar">Simular el día del viaje</button>
+  </div>`;
+};
+
+P.encurso = () => {
+  const v = viaje();
+  const p = paradero();
+  const llego = estado.progreso >= 1;
+  return `
+  <div class="map" style="flex:1">${mapaSVG({ ruta: v.ruta, paraderos: v.paraderos, miParadero: p.id, auto: true })}
+    <div class="eta"><div class="min" id="etaMin">${llego ? 'Ya' : '6'}</div><div style="flex:1"><b id="etaTxt">${llego ? 'Llegaron a destino' : `${esc(v.conductor.split(' ')[0])} va a tu paradero`}</b><div style="font-size:14px;color:var(--a-muted)" id="etaSub">min · ${esc(p.nombre)}</div></div></div>
+    <span class="example-tag">Simulación</span>
+  </div>
+  <div class="sheet" style="margin-top:-24px">
+    <div class="grab"></div>
+    <div class="driver" style="background:none;padding:0 0 12px"><span class="avatar" style="background:${v.color}">${v.inicial}</span><div style="flex:1"><b>${esc(v.conductor)}</b> <span style="font-size:13px;color:var(--a-muted)">${I.star} ${v.nota}</span><div style="font-size:14px;color:var(--a-muted)">${esc(v.auto)}</div></div><span class="plate">${v.patente}</span></div>
+    <div class="stops" style="margin-top:0">${v.paraderos.map((q) => `<div class="stop${q.id === p.id ? ' mine' : ''}" style="cursor:default;padding:5px 0"><span class="dot"></span><div>${esc(q.nombre)}<small>${q.hora}</small></div></div>`).join('')}</div>
+  </div>
+  <div class="footer" style="grid-template-columns:1fr 1fr">
+    <button class="cta ghost" data-act="compartir">${I.share} Compartir</button>
+    <button class="cta" id="btnLlegar" data-go="pago" ${llego ? '' : 'disabled'}>Llegamos</button>
+  </div>`;
+};
+
+P.pago = () => {
+  const v = viaje();
+  const precio = precioPorPersona(v.costo, v.inscritos);
+  const informado = estado.pago === 'informado';
+  return `
+  <div style="padding:66px 20px 0;display:flex;align-items:center;gap:10px"><button class="fab" style="position:static;box-shadow:none;background:var(--a-fill)" data-go="encurso" aria-label="Volver">${I.back}</button><p class="h2">Pagar el viaje</p></div>
+  <div class="scroll" style="padding:16px 20px">
+    <div class="card" style="text-align:center;padding:22px">
+      <small style="color:var(--a-muted)">Precio final por persona · ${v.inscritos} pasajeros</small>
+      <div class="big-price" style="margin-top:6px">${formatoCLP(precio)}</div>
+      <p class="sub" style="font-size:13px">Costo total ${formatoCLP(v.costo, false)} repartido entre ${v.inscritos}</p>
+    </div>
+    <div class="sec-title"><b>Transfiere directo a ${esc(v.conductor.split(' ')[0])}</b><span>Datos de ejemplo</span></div>
+    <div class="card" id="datosBanco">
+      <div class="kv"><span>Nombre</span><b>Camila R. (ejemplo)</b></div>
+      <div class="kv"><span>RUT</span><b>11.111.111-1</b></div>
+      <div class="kv"><span>Banco</span><b>Banco de ejemplo</b></div>
+      <div class="kv"><span>Cuenta</span><b>Cuenta vista 0000 1111</b></div>
+      <div class="kv"><span>Monto</span><b>${formatoCLP(precio, false)}</b></div>
+    </div>
+    <button class="cta ghost" style="margin-top:12px" data-act="copiar">${I.copy} <span id="copiarTxt">Copiar datos</span></button>
+    <p class="sub" style="font-size:13px;margin-top:12px">La app no toca tu dinero: transfieres desde tu banco y ${esc(v.conductor.split(' ')[0])} confirma que le llegó.</p>
+    ${informado ? `<div class="drop" style="margin-top:14px">${I.check} Avisamos a ${esc(v.conductor.split(' ')[0])}. Falta que confirme el pago.</div>` : ''}
+  </div>
+  <div class="footer"><button class="cta" data-act="pague" ${informado ? 'disabled' : ''}>${informado ? 'Pago informado' : 'Ya transferí'}</button></div>`;
+};
+
+P.publicar = () => {
+  const f = estado.form;
+  const gratis = f.tipo === 'gratis';
+  const costo = gratis ? 0 : Number(f.costo);
+  const valido = gratis || (/^\d+$/.test(f.costo) && costo > 0 && costo <= 200000);
+  const escala = valido ? escalaDePrecios(costo, f.cupos) : [];
+  const max = escala.length && escala[0].precio ? escala[0].precio : 1;
+  return `
+  <div style="padding:66px 20px 6px"><p class="h1">Publicar viaje</p><p class="sub">Un viaje que ya vas a hacer, 1 o 2 días antes</p></div>
+  <div class="scroll" style="padding:10px 20px">
+    <form id="formPub" novalidate>
+      <div class="field"><label for="f-origen">Desde</label><input id="f-origen" data-f="origen" value="${esc(f.origen)}"></div>
+      <div class="field"><label for="f-destino">Hasta</label><input id="f-destino" data-f="destino" value="${esc(f.destino)}"></div>
+      <div class="field"><label for="f-hora">Salida</label><input id="f-hora" data-f="hora" value="${esc(f.hora)}"></div>
+      <div class="field"><label>Tipo de viaje</label><div class="seg"><button type="button" class="${gratis ? '' : 'on'}" data-act="tipo" data-id="pagado">Pagado</button><button type="button" class="${gratis ? 'on' : ''}" data-act="tipo" data-id="gratis">Gratis</button></div></div>
+      ${gratis ? '' : `<div class="field"><label for="f-costo">Costo total del viaje (bencina y peajes)</label><input id="f-costo" data-f="costo" inputmode="numeric" value="${esc(f.costo)}">${valido ? '' : '<span class="err">Escribe un monto en pesos, sin puntos, entre 1 y 200000.</span>'}</div>`}
+      <div class="field"><label>Cupos</label><div class="stepper"><button type="button" data-act="cupos" data-id="-1" aria-label="Menos cupos">−</button><b>${f.cupos}</b><button type="button" data-act="cupos" data-id="1" aria-label="Más cupos">+</button><span class="sub" style="margin:0">máximo 8</span></div></div>
+      ${!gratis && valido ? `<div class="card"><b style="font-size:15px">Así baja el precio para tus pasajeros</b><div class="scale">${escala.map((e) => `<div class="bar"><span>${e.pasajeros} ${e.pasajeros === 1 ? 'persona' : 'personas'}</span><i style="width:${Math.max(8, (e.precio / max) * 100)}%;background:var(--a-accent);opacity:${0.35 + 0.65 * (e.pasajeros / f.cupos)}"></i><b>${formatoCLP(e.precio)}</b></div>`).join('')}</div><p class="sub" style="font-size:13px;margin-top:8px">Nunca cobras más que el costo real.</p></div>` : ''}
+      ${gratis ? '' : `<div class="row" style="cursor:default;margin-top:8px"><span class="ico">${I.bank}</span><div class="t">Cuenta de cobro<small>CuentaRUT · terminada en 1111 (ejemplo)</small></div></div>`}
+    </form>
+  </div>
+  <div class="footer" style="padding-bottom:12px"><button class="cta" data-act="publicar" ${valido && f.origen.trim() && f.destino.trim() ? '' : 'disabled'}>Publicar viaje</button></div>
+  ${tabbar('publicar')}`;
+};
+
+P.misviajes = () => {
+  const pas = estado.rolMisViajes === 'pasajero';
+  const mios = estado.viajes.filter((v) => v.propio);
+  const comoPasajero = estado.inscrito ? [viaje()] : [];
+  const items = pas ? comoPasajero : mios;
+  return `
+  <div style="padding:66px 20px 6px"><p class="h1">Mis viajes</p></div>
+  <div style="padding:6px 20px 0"><div class="seg"><button class="${pas ? 'on' : ''}" data-act="rol" data-id="pasajero">Como pasajero</button><button class="${pas ? '' : 'on'}" data-act="rol" data-id="conductor">Como conductor</button></div></div>
+  <div class="scroll" style="padding:16px 20px">
+    ${items.length ? items.map((v) => `<button class="trip" data-act="abrir" data-id="${v.id}"><div class="route">${esc(v.origen)} → ${esc(v.destino)}</div><div class="price"><b>${formatoCLP(precioPorPersona(v.costo, v.inscritos))}</b><small>${v.inscritos} de ${v.cupos}</small></div><div class="meta"><span>${I.clock} ${esc(v.sale)}</span><span class="pill ${v.estado === 'confirmado' ? 'ok' : 'wait'}">${v.estado === 'confirmado' ? 'Confirmado' : 'Esperando pasajeros'}</span></div></button>`).join('')
+      : `<div style="text-align:center;padding:60px 10px;color:var(--a-muted)"><div class="ico" style="margin:0 auto 12px;width:56px;height:56px">${pas ? I.search : I.tabPub.replace('<svg', '<svg width="26" height="26"')}</div><b style="color:var(--a-ink)">${pas ? 'Aún no te inscribes en un viaje' : 'Aún no publicas viajes'}</b><p style="margin:6px 0 16px">${pas ? 'Busca un destino y súmate a un viaje de tu comunidad.' : 'Publica un viaje que ya vas a hacer y reparte el costo.'}</p><button class="cta" style="width:auto;display:inline-flex;padding:12px 20px;min-height:44px;font-size:16px" data-go="${pas ? 'buscar' : 'publicar'}">${pas ? 'Buscar viaje' : 'Publicar viaje'}</button></div>`}
+  </div>
+  ${tabbar('misviajes')}`;
+};
+
+P.perfil = () => {
+  const a = estado.avisos;
+  const t = (k) => `<button class="toggle${a[k] ? '' : ' off'}" data-act="aviso" data-id="${k}" aria-pressed="${a[k]}" aria-label="Activar aviso"></button>`;
+  return `
+  <div style="padding:66px 20px 6px;display:flex;gap:14px;align-items:center"><span class="avatar" style="background:var(--a-accent);width:64px;height:64px;font-size:22px">C</span><div><p class="h2">Claudio</p><p class="sub">Pasajero y conductor</p></div></div>
+  <div class="scroll" style="padding:10px 20px">
+    <div class="sec-title"><b>Notificaciones</b></div>
+    <div class="row" style="cursor:default"><span class="ico acc">${I.down}</span><div class="t">Baja de precio</div>${t('baja')}</div>
+    <div class="row" style="cursor:default"><span class="ico acc">${I.bell}</span><div class="t">Recordatorio 30 min antes</div>${t('recordatorio')}</div>
+    <div class="row" style="cursor:default"><span class="ico acc">${I.pin}</span><div class="t">Conductor llegando</div>${t('llegando')}</div>
+    <div class="sec-title"><b>Como conductor</b></div>
+    <button class="row"><span class="ico">${I.bank}</span><div class="t">Cuenta de cobro<small>Se reutiliza en todos tus viajes</small></div>${I.chev}</button>
+    <button class="row"><span class="ico">${I.shield}</span><div class="t">Verificar identidad y patente<small>Por definir</small></div><span class="pill">Pronto</span></button>
+    <div class="sec-title"><b>Más adelante</b><span>Fuera del MVP</span></div>
+    <div class="row" style="cursor:default;opacity:.6"><span class="ico">${I.users}</span><div class="t">Comunidades cerradas<small>Barrio, universidad, empresa</small></div></div>
+    <div class="row" style="cursor:default;opacity:.6"><span class="ico">${I.star}</span><div class="t">Calificaciones</div></div>
+  </div>
+  ${tabbar('perfil')}`;
+};
+
+// ---------- Qué hay detrás de cada pantalla (solo lo que existe en el repo) ----------
+const DETRAS = {
+  inicio: { n: 'Inicio · viajes de la comunidad', spec: 'Pantalla 1 de la spec', ok: ['precioPorPersona y precioConUnoMas en precio.ts', 'Vista viajes_con_precio en la base'], no: ['Pantalla en código', 'Mapa real (proveedor por definir)', 'Login por SMS'] },
+  buscar: { n: 'Buscar destino', spec: 'Agregado por el estilo de movilidad', ok: ['Tabla paraderos con coordenadas'], no: ['Pantalla en código', 'Búsqueda de lugares (proveedor de mapas por definir)'] },
+  opciones: { n: 'Opciones de viaje para tu ruta', spec: 'Agregado por el estilo de movilidad', ok: ['Precio dinámico y "baja a $X con 1 más"', 'Vista viajes_con_precio'], no: ['Pantalla en código', 'Filtro por cercanía de paraderos'] },
+  detalle: { n: 'Detalle del viaje', spec: 'Pantalla 2 de la spec', ok: ['escalaDePrecios en precio.ts', 'Paraderos ordenados en la base'], no: ['Pantalla en código'] },
+  confirmado: { n: 'Inscripción confirmada', spec: 'Función 3 del MVP', ok: ['inscribirse() con control de cupos', 'Aviso de baja de precio queda en cola_notificaciones', 'seguidores_viaje para avisar a quienes miran'], no: ['Pantalla en código', 'Envío real de push (Expo/APNs)'] },
+  encurso: { n: 'Viaje en curso', spec: 'Pantalla 5 de la spec', ok: ['Tabla ubicaciones_conductor', 'Tipo de aviso conductor_llegando'], no: ['Pantalla y mapa en código', 'Cálculo de "conductor llegando"', 'Compartir viaje en vivo'], half: ['Distancia del aviso: propuesta 1 km o 3 min'] },
+  pago: { n: 'Pago al conductor', spec: 'Pantalla 6 de la spec', ok: ['Tabla pagos: pendiente, informado, confirmado', 'Cuenta de cobro visible solo para inscritos'], no: ['Pantalla en código', 'Link de pago (alternativa)'], half: ['Cuándo se cobra: al terminar o al inscribirse'] },
+  publicar: { n: 'Publicar viaje', spec: 'Pantalla 3 de la spec', ok: ['escalaDePrecios para la vista previa', 'Tablas viajes, paraderos y cuentas_cobro; máximo 8 cupos'], no: ['Pantalla en código', 'Elegir paraderos en el mapa'] },
+  misviajes: { n: 'Mis viajes', spec: 'Pantalla 4 de la spec', ok: ['Estados del viaje en la base (esperando, confirmado, en curso…)'], no: ['Pantalla en código'] },
+  perfil: { n: 'Perfil', spec: 'Barra de pestañas de la spec', ok: ['Tabla perfiles con token push', 'Cuentas de cobro reutilizables'], no: ['Pantalla en código', 'Verificación de identidad y patente'] },
+};
+const ORDEN = ['inicio', 'buscar', 'opciones', 'detalle', 'confirmado', 'encurso', 'pago', 'publicar', 'misviajes', 'perfil'];
+
+function pintarPanel() {
+  const d = DETRAS[estado.pantalla];
+  document.getElementById('nowOn').innerHTML = `
+    <p class="eyebrow">En pantalla ahora · ${d.spec}</p>
+    <h3>${d.n}</h3>
+    <p>Lo que ya existe detrás de esta pantalla y lo que falta:</p>
+    <div class="chips">${d.ok.map((t) => `<span class="chip ok">✓ ${esc(t)}</span>`).join('')}${(d.half || []).map((t) => `<span class="chip half">● ${esc(t)}</span>`).join('')}${d.no.map((t) => `<span class="chip no">✕ ${esc(t)}</span>`).join('')}</div>`;
+  document.getElementById('jump').innerHTML = ORDEN.map((k) => `<button class="${k === estado.pantalla ? 'on' : ''}" data-go="${k}">${DETRAS[k].n.split(' · ')[0]}</button>`).join('');
+}
+
+// ---------- Navegación y eventos ----------
+const app = document.getElementById('app');
+let timerPush, rafAuto;
+function ir(pantalla) {
+  if (!P[pantalla]) return;
+  if (pantalla === 'confirmado' && !estado.inscrito) { estado.inscrito = true; const v = viaje(); if (v.inscritos < v.cupos) v.inscritos++; }
+  if (pantalla === 'encurso' && !estado.inscrito) { estado.inscrito = true; const v = viaje(); if (v.inscritos < v.cupos) v.inscritos++; }
+  cancelAnimationFrame(rafAuto);
+  estado.pantalla = pantalla;
+  app.innerHTML = `<div class="view">${P[pantalla]()}</div>`;
+  pintarPanel();
+  if (pantalla === 'encurso') animarAuto();
+}
+function avisar(titulo, texto) {
+  const el = document.getElementById('push');
+  el.innerHTML = `${LOGO}<div style="flex:1"><div style="display:flex"><b>${esc(titulo)}</b><small>ahora</small></div>${esc(texto)}</div>`;
+  el.classList.add('show');
+  clearTimeout(timerPush);
+  timerPush = setTimeout(() => el.classList.remove('show'), 3800);
+}
+function animarAuto() {
+  const v = viaje();
+  const path = document.getElementById('rutaPath');
+  const auto = document.getElementById('auto');
+  if (!path || !auto) return;
+  const total = path.getTotalLength();
+  const pts = RUTAS[v.ruta];
+  // largo hasta mi paradero
+  let hasta = 0;
+  for (let i = 1; i <= paradero().i; i++) hasta += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  const meta = Math.max(hasta, total * 0.12);
+  const dur = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 9000;
+  const t0 = performance.now() - estado.progreso * dur;
+  let avisado = estado.progreso >= 0.7;
+  const paso = (now) => {
+    const k = Math.min(1, (now - t0) / dur);
+    estado.progreso = k;
+    const pt = path.getPointAtLength(meta * k);
+    auto.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
+    const min = Math.ceil(6 * (1 - k));
+    const m = document.getElementById('etaMin');
+    if (m) m.textContent = k >= 1 ? 'Ya' : String(Math.max(1, min));
+    if (!avisado && k >= 0.7 && estado.avisos.llegando) { avisado = true; avisar(`${v.conductor.split(' ')[0]} está llegando`, `A ${paradero().nombre} en unos 2 minutos. Patente ${v.patente}.`); }
+    if (k >= 1) {
+      document.getElementById('etaTxt').textContent = `${v.conductor.split(' ')[0]} llegó a tu paradero`;
+      document.getElementById('etaSub').textContent = 'Súbete y buen viaje';
+      const b = document.getElementById('btnLlegar'); if (b) b.disabled = false;
+      return;
+    }
+    rafAuto = requestAnimationFrame(paso);
+  };
+  rafAuto = requestAnimationFrame(paso);
+}
+
+document.addEventListener('click', (e) => {
+  const go = e.target.closest('[data-go]');
+  const act = e.target.closest('[data-act]');
+  if (act) {
+    const id = act.dataset.id;
+    switch (act.dataset.act) {
+      case 'abrir': estado.viajeSel = id; estado.paraderoSel = viaje().paraderos[Math.min(1, viaje().paraderos.length - 1)].id; ir('detalle'); return;
+      case 'destino': estado.viajeSel = id; estado.paraderoSel = viaje().paraderos[Math.min(1, viaje().paraderos.length - 1)].id; ir('opciones'); return;
+      case 'elegir': estado.viajeSel = id; estado.paraderoSel = viaje().paraderos[Math.min(1, viaje().paraderos.length - 1)].id; ir('opciones'); return;
+      case 'paradero': estado.paraderoSel = id; ir('detalle'); return;
+      case 'inscribir': {
+        const v = viaje();
+        if (v.inscritos >= v.cupos) return;
+        estado.inscrito = true; estado.progreso = 0; estado.pago = 'pendiente';
+        v.inscritos++;
+        ir('confirmado');
+        const unoMas = precioConUnoMas(v.costo, v.inscritos, v.cupos);
+        avisar('Inscripción lista', v.costo ? `Pagas ${formatoCLP(precioPorPersona(v.costo, v.inscritos))}${unoMas ? `. Baja a ${formatoCLP(unoMas)} si se suma 1 más.` : '.'}` : 'Viaje gratis. Te recordamos 30 min antes.');
+        return;
+      }
+      case 'sumar': {
+        const v = viaje();
+        if (v.inscritos >= v.cupos) return;
+        const antes = precioPorPersona(v.costo, v.inscritos);
+        v.inscritos++;
+        ir('confirmado');
+        if (estado.avisos.baja) avisar('Bajó el precio de tu viaje', `Se sumó otra persona. Ahora pagas ${formatoCLP(precioPorPersona(v.costo, v.inscritos))} (antes ${formatoCLP(antes)}).`);
+        return;
+      }
+      case 'iniciar': estado.progreso = 0; ir('encurso'); if (estado.avisos.recordatorio) avisar('Tu viaje sale en 30 minutos', `${viaje().conductor} pasa por ${paradero().nombre} a las ${paradero().hora}.`); return;
+      case 'compartir': avisar('Viaje compartido', 'En la app real se enviará un enlace de seguimiento en vivo.'); return;
+      case 'copiar': {
+        const txt = Array.from(document.querySelectorAll('#datosBanco .kv')).map((r) => `${r.children[0].textContent}: ${r.children[1].textContent}`).join('\n');
+        const ok = () => { const s = document.getElementById('copiarTxt'); if (s) s.textContent = 'Datos copiados'; };
+        try { navigator.clipboard.writeText(txt).then(ok, () => seleccionar()); } catch { seleccionar(); }
+        return;
+      }
+      case 'pague': estado.pago = 'informado'; ir('pago'); avisar('Pago informado', `Avisamos a ${viaje().conductor.split(' ')[0]} para que confirme tu transferencia.`); return;
+      case 'tipo': estado.form.tipo = id; ir('publicar'); return;
+      case 'cupos': estado.form.cupos = Math.min(8, Math.max(1, estado.form.cupos + Number(id))); ir('publicar'); return;
+      case 'publicar': {
+        const f = estado.form;
+        const costo = f.tipo === 'gratis' ? 0 : Number(f.costo);
+        const nuevo = { id: 'v' + (estado.viajes.length + 1), propio: true, conductor: 'Claudio', inicial: 'C', color: '#0B7A6B', auto: 'Tu auto', patente: 'ABCD·12', nota: '5,0', origen: f.origen.trim(), destino: f.destino.trim(), sale: f.hora.trim() || 'Mañana', llegada: '—', costo, cupos: f.cupos, inscritos: 0, estado: 'esperando_pasajeros', ruta: 'nunoa',
+          paraderos: [{ id: 'n1', nombre: f.origen.trim(), tipo: 'punto_fijo', hora: '—', i: 0 }, { id: 'n2', nombre: f.destino.trim(), tipo: 'punto_fijo', hora: '—', i: 4 }] };
+        estado.viajes.push(nuevo);
+        estado.rolMisViajes = 'conductor';
+        ir('misviajes');
+        avisar('Viaje publicado', 'Te avisaremos cuando alguien se inscriba.');
+        return;
+      }
+      case 'rol': estado.rolMisViajes = id; ir('misviajes'); return;
+      case 'aviso': estado.avisos[id] = !estado.avisos[id]; ir('perfil'); return;
+    }
+  }
+  if (go) ir(go.dataset.go);
+});
+function seleccionar() {
+  const el = document.getElementById('datosBanco');
+  if (!el) return;
+  const r = document.createRange(); r.selectNodeContents(el);
+  const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  const t = document.getElementById('copiarTxt'); if (t) t.textContent = 'Datos seleccionados';
+}
+document.addEventListener('input', (e) => {
+  const k = e.target.dataset && e.target.dataset.f;
+  if (!k) return;
+  estado.form[k] = e.target.value;
+  // Re-render de la vista previa conservando el foco y el cursor del campo
+  const id = e.target.id, pos = e.target.selectionStart;
+  const sc = document.querySelector('#app .scroll'); const top = sc ? sc.scrollTop : 0;
+  ir('publicar');
+  const sc2 = document.querySelector('#app .scroll'); if (sc2) sc2.scrollTop = top;
+  const inp = document.getElementById(id);
+  if (inp) { inp.focus(); try { inp.setSelectionRange(pos, pos); } catch {} }
+});
+document.addEventListener('submit', (e) => e.preventDefault());
+
+// ---------- Escalar el teléfono al espacio disponible ----------
+function ajustar() {
+  const fit = document.getElementById('phoneFit');
+  const phone = document.getElementById('phone');
+  const col = fit.parentElement;
+  const anchoDisp = col.clientWidth || window.innerWidth - 32;
+  const altoDisp = window.innerWidth > 960 ? window.innerHeight - 120 : Infinity;
+  const s = Math.max(0.5, Math.min(1, anchoDisp / 468, altoDisp / 984));
+  phone.style.transform = `scale(${s})`;
+  fit.style.width = 468 * s + 'px';
+  fit.style.height = 984 * s + 'px';
+}
+window.addEventListener('resize', ajustar);
+ajustar();
+ir('inicio');
+</script>
