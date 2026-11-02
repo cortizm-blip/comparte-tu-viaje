@@ -1,5 +1,5 @@
 // Distancias y tiempo estimado de llegada para el viaje en curso.
-import type { Coordenada } from '../datos/tipos';
+import type { Coordenada, Paradero, Viaje } from '../datos/tipos';
 
 const VELOCIDAD_CIUDAD_KMH = 25;
 
@@ -28,4 +28,20 @@ export function regionPara(puntos: Coordenada[]) {
     latitudeDelta: Math.max((maxLat - minLat) * 1.6, 0.02),
     longitudeDelta: Math.max((maxLng - minLng) * 1.6, 0.02),
   };
+}
+
+export type ViajeCercano = { viaje: Viaje; paradero: Paradero; distanciaM: number };
+
+// Viajes con algún paradero a menos de maxM metros del punto, del más cercano al más lejano.
+export function viajesCerca(viajes: Viaje[], punto: Coordenada, maxM: number): ViajeCercano[] {
+  const cercanos: ViajeCercano[] = [];
+  for (const viaje of viajes) {
+    let mejor: ViajeCercano | null = null;
+    for (const paradero of viaje.paraderos) {
+      const d = distanciaM(punto, paradero);
+      if (d <= maxM && (!mejor || d < mejor.distanciaM)) mejor = { viaje, paradero, distanciaM: d };
+    }
+    if (mejor) cercanos.push(mejor);
+  }
+  return cercanos.sort((a, b) => a.distanciaM - b.distanciaM);
 }

@@ -1,10 +1,11 @@
-// Raíz de la app: sesión, pantalla de bienvenida la primera vez y navegación en pila.
+// Raíz de la app: pantalla de inicio con la marca, sesión, bienvenida la primera vez y navegación en pila.
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Boton, Campo, Estado, s } from '../componentes/basicos';
+import { Marca, PantallaInicio } from '../componentes/marca';
 import { repo } from '../datos';
 import { escucharToques } from '../notificaciones';
 import { ProveedorSesion, useSesion } from '../sesion';
@@ -21,17 +22,19 @@ export default function Raiz() {
   );
 }
 
+const INICIO_MINIMO_MS = 1500;
+
 function Contenido() {
   const { cargando, error, perfil, reintentar } = useSesion();
+  const [marcaVista, setMarcaVista] = useState(false);
   useEffect(() => escucharToques(), []);
+  // La marca se muestra al menos 1,5 s al abrir, aunque la sesión cargue antes.
+  useEffect(() => {
+    const t = setTimeout(() => setMarcaVista(true), INICIO_MINIMO_MS);
+    return () => clearTimeout(t);
+  }, []);
 
-  if (cargando) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={color.primario} />
-      </View>
-    );
-  }
+  if (cargando || !marcaVista) return <PantallaInicio />;
   if (error) return <SafeAreaView style={{ flex: 1 }}><Estado error={error} onReintentar={reintentar} /></SafeAreaView>;
   if (!perfil) return <Bienvenida />;
 
@@ -69,8 +72,8 @@ function Bienvenida() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: color.fondo }}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, padding: espacio.xl, justifyContent: 'center', gap: espacio.l }}>
-        <Text style={[s.titulo, { color: color.primario }]}>Comparte tu viaje</Text>
-        <Text style={s.texto}>
+        <Marca tamano={110} />
+        <Text style={[s.texto, { textAlign: 'center' }]}>
           Súmate a viajes que tu comunidad ya va a hacer. Mientras más se inscriben, menos paga cada uno.
         </Text>
         <Campo etiqueta="¿Cómo te llamas?" value={nombre} onChangeText={setNombre} placeholder="Nombre y apellido" autoFocus

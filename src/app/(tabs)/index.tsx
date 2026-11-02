@@ -2,7 +2,7 @@
 // búsqueda "¿A dónde vas?", destinos con viajes publicados y viajes que salen pronto.
 import { Ionicons } from '@expo/vector-icons';
 import { router, type Href } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Estado, s, Subtitulo } from '../../componentes/basicos';
@@ -14,12 +14,10 @@ import { useSesion } from '../../sesion';
 import { color, espacio, radio, TOQUE_MINIMO } from '../../tema';
 import { useCarga } from '../../useCarga';
 
-type NombreIcono = keyof typeof Ionicons.glyphMap;
-
-const ACCIONES: { titulo: string; icono: NombreIcono; destino: Href }[] = [
-  { titulo: 'Viajar', icono: 'car-sport', destino: '/buscar' },
-  { titulo: 'Publicar', icono: 'add-circle', destino: '/publicar' },
-  { titulo: 'Mis viajes', icono: 'calendar', destino: '/mis-viajes' },
+const ACCIONES: { titulo: string; imagen: ImageSourcePropType; destino: Href }[] = [
+  { titulo: 'Viajar', imagen: require('../../../assets/iconos/viajar.png'), destino: '/buscar' },
+  { titulo: 'Publicar', imagen: require('../../../assets/iconos/publicar.png'), destino: '/publicar' },
+  { titulo: 'Mis viajes', imagen: require('../../../assets/iconos/mis-viajes.png'), destino: '/mis-viajes' },
 ];
 
 const ALTO_MAPA = 340;
@@ -60,9 +58,7 @@ export default function Inicio() {
             {ACCIONES.map((a, i) => (
               <Pressable key={a.titulo} onPress={() => router.push(a.destino)} accessibilityRole="button"
                 style={({ pressed }) => [st.accion, i === 0 && st.accionActiva, pressed && { opacity: 0.8 }]}>
-                <View style={[st.accionIcono, i === 0 && { backgroundColor: color.primario }]}>
-                  <Ionicons name={a.icono} size={30} color={i === 0 ? color.blanco : color.primario} />
-                </View>
+                <Image source={a.imagen} style={st.accionImagen} resizeMode="contain" />
                 <Text style={[st.accionTexto, i === 0 && { color: color.primario }]}>{a.titulo}</Text>
               </Pressable>
             ))}
@@ -118,7 +114,7 @@ const st = StyleSheet.create({
     borderWidth: 1.5, borderColor: color.borde, backgroundColor: color.fondo,
   },
   accionActiva: { borderColor: color.primario, borderWidth: 2, backgroundColor: color.primarioSuave },
-  accionIcono: { width: 56, height: 56, borderRadius: 16, backgroundColor: color.primarioSuave, alignItems: 'center', justifyContent: 'center' },
+  accionImagen: { width: 72, height: 72 },
   accionTexto: { fontSize: 15, fontWeight: '600', color: color.texto },
   buscador: {
     flexDirection: 'row', alignItems: 'center', gap: espacio.s, backgroundColor: color.fondoGris,

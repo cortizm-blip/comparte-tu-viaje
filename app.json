@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Comparte tu viaje",
+    "name": "InTraffic",
     "slug": "comparte-tu-viaje",
     "scheme": "compartetuviaje",
     "version": "0.1.0",
@@ -26,7 +26,7 @@
       [
         "expo-notifications",
         {
-          "color": "#1F4FFF"
+          "color": "#F0331F"
         }
       ]
     ]

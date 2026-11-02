@@ -50,7 +50,7 @@ export default function EnCurso() {
   function compartir() {
     const auto = [viaje!.conductor.auto, viaje!.conductor.patente].filter(Boolean).join(', ');
     Share.share({
-      message: `Voy en Comparte tu viaje: ${viaje!.origen} → ${viaje!.destino} con ${viaje!.conductor.nombre}${auto ? ` (${auto})` : ''}.`
+      message: `Voy en InTraffic: ${viaje!.origen} → ${viaje!.destino} con ${viaje!.conductor.nombre}${auto ? ` (${auto})` : ''}.`
         + (conductor ? ` Ubicación: https://maps.apple.com/?ll=${conductor.lat},${conductor.lng}` : ''),
     });
   }
