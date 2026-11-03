@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF4A2B"/><stop offset="1" stop-color="#E81E2E"/></linearGradient>
+    <linearGradient id="m2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB24D"/><stop offset="1" stop-color="#FF8606"/></linearGradient>
+    <linearGradient id="v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EAF3FF"/><stop offset="1" stop-color="#B9CCE6"/></linearGradient>
+  </defs>
+  <ellipse cx="60" cy="96" rx="46" ry="6" fill="#000" opacity=".10"/>
+  <!-- auto de atrás -->
+  <g transform="translate(26 6) scale(.8)">
+    <path d="M22 70 L34 48 Q37 43 43 43 L77 43 Q83 43 86 48 L98 70 Q106 71 106 79 L106 86 Q106 90 102 90 L18 90 Q14 90 14 86 L14 79 Q14 71 22 70 Z" fill="url(#m2)"/>
+    <path d="M38 68 L45 52 Q46 50 49 50 L58 50 L58 68 Z M63 50 L72 50 Q75 50 76 52 L83 68 L63 68 Z" fill="url(#v)"/>
+    <circle cx="36" cy="90" r="10" fill="#2B2E3A"/><circle cx="36" cy="90" r="4.5" fill="#C9CED8"/>
+    <circle cx="84" cy="90" r="10" fill="#2B2E3A"/><circle cx="84" cy="90" r="4.5" fill="#C9CED8"/>
+  </g>
+  <!-- auto de adelante -->
+  <g transform="translate(-6 10)">
+    <path d="M22 70 L34 48 Q37 43 43 43 L77 43 Q83 43 86 48 L98 70 Q106 71 106 79 L106 86 Q106 90 102 90 L18 90 Q14 90 14 86 L14 79 Q14 71 22 70 Z" fill="url(#m)"/>
+    <path d="M38 68 L45 52 Q46 50 49 50 L58 50 L58 68 Z M63 50 L72 50 Q75 50 76 52 L83 68 L63 68 Z" fill="url(#v)"/>
+    <rect x="16" y="76" width="10" height="5" rx="2.5" fill="#FFE7A3"/><rect x="95" y="76" width="9" height="5" rx="2.5" fill="#FFD3D3"/>
+    <path d="M30 70 L92 70" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="2"/>
+    <circle cx="36" cy="90" r="10" fill="#2B2E3A"/><circle cx="36" cy="90" r="4.5" fill="#C9CED8"/>
+    <circle cx="84" cy="90" r="10" fill="#2B2E3A"/><circle cx="84" cy="90" r="4.5" fill="#C9CED8"/>
+  </g>
+</svg>

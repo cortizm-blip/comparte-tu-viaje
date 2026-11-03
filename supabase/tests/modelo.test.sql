@@ -95,10 +95,10 @@ do $$ begin
 end $$;
 
 -- La cuenta de cobro solo la ven conductor e inscritos (RLS, con un rol sin privilegios).
-create role probador_rls;
+create role probador_rls in role authenticated;
 grant usage on schema public, auth to probador_rls;
 grant select on all tables in schema public to probador_rls;
-grant execute on all functions in schema auth to probador_rls;
+grant execute on all functions in schema auth, public to probador_rls;
 set local role probador_rls;
 select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
 do $$ begin assert (select count(*) from cuentas_cobro) = 1; end $$;

@@ -1,18 +1,19 @@
 # Comparte tu viaje
 
-App iPhone donde el conductor publica un viaje que ya va a hacer y el costo se reparte entre los inscritos. La spec completa está en [AGENTS.md](AGENTS.md).
+App iPhone donde el conductor publica un viaje que ya va a hacer y el costo se reparte entre los inscritos. La spec completa está en [AGENTS.md](AGENTS.md) y la maqueta en [docs/diseno/maqueta-iphone.html](docs/diseno/maqueta-iphone.html).
 
-## Estado
+**Stack:** Expo (React Native) con Expo Router, Supabase (Postgres, auth, funciones), push con Expo, mapas con Apple Maps (`react-native-maps`).
 
-- `src/lib/precio.ts`: precio dinámico, escala, "baja a $X con 1 más" y formato CLP.
-- `supabase/migrations/0001_modelo_inicial.sql`: modelo de datos, inscripción con control de cupos, cola de notificaciones y seguridad por filas.
-- `docs/modelo-de-datos.md`: explicación del modelo y supuestos.
-- App móvil: pendiente de confirmar stack.
+Para correrla en tu iPhone y conectar Supabase, ver [docs/puesta-en-marcha.md](docs/puesta-en-marcha.md).
 
-## Pruebas
+## Estructura
 
-```sh
-npm test                                   # lógica de precio (Node 22+)
-psql -d <base> -f supabase/migrations/0001_modelo_inicial.sql
-psql -d <base> -v ON_ERROR_STOP=1 -f supabase/tests/modelo.test.sql
-```
+| Carpeta | Qué hay |
+|---|---|
+| `src/app/` | Pantallas (Expo Router): Viajes, Buscar, Detalle, Inscrito, Viaje en curso, Pago, Publicar, Mis viajes, Perfil, Cuenta de cobro. |
+| `src/componentes/` | Botones, tarjetas, escala de precios, paraderos y mapa. |
+| `src/datos/` | Contrato de datos con dos implementaciones: Supabase y demo en memoria. |
+| `src/lib/` | Precio dinámico, fechas, distancias y RUT, con pruebas. |
+| `supabase/migrations/` | Modelo de datos y funciones SQL (inscripción, publicar, ubicación, pagos). |
+| `supabase/functions/` | Envío de notificaciones push. |
+| `docs/` | Modelo de datos, puesta en marcha y diseño. |

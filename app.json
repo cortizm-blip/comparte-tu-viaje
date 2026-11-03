@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "InTraffic",
+    "slug": "comparte-tu-viaje",
+    "scheme": "compartetuviaje",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "cl.compartetuviaje.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para mostrarte paraderos cercanos y, si conduces, para avisar a tus pasajeros que vas llegando.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos tu ubicación para mostrarte paraderos cercanos y, si conduces, para avisar a tus pasajeros que vas llegando.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "locationFullAccuracyPermission": false,
+          "motionUsagePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#F0331F"
+        }
+      ]
+    ]
+  }
+}

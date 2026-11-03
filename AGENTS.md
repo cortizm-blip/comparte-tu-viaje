@@ -43,13 +43,13 @@ Estilo: claro tipo iOS, verde azulado #0B7A6B como color principal, tipografía 
 - Seguridad: verificación de identidad y patente, compartir viaje en vivo.
 - Monetización: dejar para después.
 
-## Stack (completar)
+## Stack
 
-- Plataforma: [SwiftUI solo iPhone / React Native con Expo]
-- Backend y base de datos: [por definir]
-- Notificaciones push: [por definir]
-- Mapas: [por definir]
-- Pagos: [transferencia con datos copiables / link de pago]
+- Plataforma: React Native con Expo (SDK 58) y Expo Router. Se prueba en iPhone con Expo Go.
+- Backend y base de datos: Supabase (Postgres con seguridad por filas, sesión anónima en el MVP, funciones SQL).
+- Notificaciones push: Expo Push, enviadas por la función `enviar-notificaciones` de Supabase cada minuto.
+- Mapas: Apple Maps vía `react-native-maps`; ubicación con `expo-location`.
+- Pagos: transferencia con datos copiables o link de pago del conductor.
 
 ## Convenciones
 
